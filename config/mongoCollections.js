@@ -18,9 +18,9 @@ const getCollectionFn = (collection) => {
 /* Now, you can list your collections here:
 NOTE: YOU WILL NEED TO CHANGE THE CODE BELOW TO HAVE THE COLLECTION(S) REQUIRED BY THE ASSIGNMENT */
 export const movies = getCollectionFn('movies');
-export const actors = getCollectionFn('actors');
-export const crew = getCollectionFn('crew');
-export const genres = getCollectionFn('genres');
-export const posters = getCollectionFn('posters');
-export const studios = getCollectionFn('studios');
-export const themes = getCollectionFn('themes');
+// export const actors = getCollectionFn('actors');
+// export const crew = getCollectionFn('crew');
+// export const genres = getCollectionFn('genres');
+// export const posters = getCollectionFn('posters');
+// export const studios = getCollectionFn('studios');
+// export const themes = getCollectionFn('themes');

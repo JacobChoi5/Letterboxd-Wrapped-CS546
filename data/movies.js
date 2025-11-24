@@ -1,4 +1,4 @@
-import {movies, actors, crew, genres, posters, studios, themes} from '../config/mongoCollections.js'
+import {movies, /*actors, crew, genres, posters, studios, themes*/} from '../config/mongoCollections.js'
 import {ObjectId} from 'mongodb'
 import * as helpers from "../helpers.js"
 
@@ -16,8 +16,76 @@ export const createNewMovie = async (
   tagline,
   description,
   minute,
-  rating
+  rating,
+  directors,//array
+  actors,//array
+  genres,//array
+  posterUrl,
+  themes,//array
+  studios//array
 ) => {
+
+  if (!Number.isInteger(_id) || _id <= 0) 
+  {
+    throw 'Movie ID must be a positive integer';
+  }
+
+  helpers.checkValidString(name, "Movie Name")
+
+  if (!Number.isInteger(date) || date < 1800 || date > new Date().getFullYear() + 1) 
+  {
+    throw 'Invalid release year';
+  }
+
+  helpers.checkValidString(tagline, "Movie Tagline")
+  helpers.checkValidString(description, "Movie Description")
+  
+  if (!Number.isInteger(minute) || minute <= 0) 
+  {
+    throw 'Movie minutes must be a positive integer';
+  }
+
+  if (typeof rating !== "number" || rating < 0 || rating > 5) 
+  {
+    throw 'Rating must be a number between 0 and 5';
+  }
+
+  helpers.checkValidString(posterUrl, "Poster Url")
+  helpers.checkValidStringArray(directors, "Directors")
+  
+  if (!Array.isArray(actors)) {
+    throw "Actors must be an array";
+  }
+  if (actors.length === 0) {
+    throw "Actors array cannot be empty";
+  }
+  actors.forEach((actor, index) => {
+    if (typeof actor !== "object" || actor === null || Array.isArray(actor)) 
+    {
+      throw `Actor at index ${index} must be an object`;
+    }
+    if (!actor.name || typeof actor.name !== "string") 
+    {
+      throw `Actor at index ${index} must have a valid 'name' string`;
+    }
+    if (actor.name.trim().length === 0) 
+    {
+      throw `Actor name at index ${index} cannot be empty`;
+    }
+    if (!actor.role || typeof actor.role !== "string") 
+    {
+      throw `Actor at index ${index} must have a valid 'role' string`;
+    }
+    if (actor.role.trim().length === 0) 
+    {
+      throw `Actor role at index ${index} cannot be empty`;
+    }
+  })
+
+  helpers.checkValidStringArray(genres, "Genres")
+  helpers.checkValidStringArray(themes, "Themes")
+  helpers.checkValidStringArray(studios, "Studios")
+
   const movieCollection = await movies();
   let newMovie = {
     _id,
@@ -26,27 +94,28 @@ export const createNewMovie = async (
     tagline,
     description,
     minute,
-    rating
+    rating,
+    directors,
+    actors,
+    genres,
+    posterUrl,
+    themes,
+    studios
   }
-
-  helpers.checkValidNumber(_id, "Movie ID")
-  helpers.checkValidString(name, "Movie Name")
-  helpers.checkValidNumber(date, "Movie Release Date")
-  helpers.checkValidString(tagline, "Movie Tagline")
-  helpers.checkValidString(description, "Movie Description")
-  helpers.checkValidNumber(minute, "Movie Minutes")
-  helpers.checkValidNumber(rating, "Movie Rating")
 
   const insertInfo = await movieCollection.insertOne(newMovie);
   if (!insertInfo.acknowledged || !insertInfo.insertedId)
   {
-    throw 'Error: Could not add course';
+    throw 'Error: Could not add movie';
   }
   const newId = insertInfo.insertedId.toString();
 
   // const movie = await getMovieById(newId);
   return newId;
 }
+
+/*
+These may be valuable for other search functions however may be unneccesary if all is held in the movie collection
 
 export const createNewActor = async (
   movieId,
@@ -197,4 +266,4 @@ export const createNewTheme = async (
   // const movie = await getMovieById(newId);
   // return newId;
 }
-
+*/
