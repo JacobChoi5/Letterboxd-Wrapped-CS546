@@ -15,4 +15,32 @@ router.route('/').get(async (req, res) => {
     }
 });
 
+router.route('/:id').get(async (req, res) => {
+    
+})
+
+router.route('/createaccount').get(async (req, res) => {
+    
+})
+
+router.route('/myaccount').get(async (req, res) => {
+    
+})
+
+router.route('/mydata').get(async (req, res) => {
+    
+})
+
+router.route('/addmovie').get(async (req, res) => {
+    
+})
+
+router.route('/accountlookup').get(async (req, res) => {
+    
+})
+
+router.route('/accountlookupresults').get(async (req, res) => {
+    
+})
+
 export default router

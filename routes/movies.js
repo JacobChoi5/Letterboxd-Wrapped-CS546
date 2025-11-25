@@ -50,5 +50,8 @@ router.route('/:id').get(async (req, res) => {
     }
 })
 
+router.route('/newmovie').get(async (req, res) => {
+    //creates new movie. will call createMovie()
+})
 
 export default router

@@ -91,3 +91,24 @@ export const checkValidAge = (val) => {
 
   checkValidNumber(number, "age");
 };
+
+export const checkValidStringArray = (arr, variableName) => {
+  if (!Array.isArray(arr)) {
+    throw `${variableName || 'provided variable'} must be an array`
+  }
+
+  if (arr.length === 0) {
+    throw `${variableName || 'provided variable'} cannot be an empty array`
+  }
+
+  arr.forEach((val, index) => {
+    if (typeof val !== "string") {
+      throw `Element at index ${index} in ${variableName || 'array'} is not a string`
+    }
+
+    val = val.trim();
+    if (val.length === 0) {
+      throw `Element at index ${index} in ${variableName || 'array'} is an empty string`
+    }
+  })
+}
