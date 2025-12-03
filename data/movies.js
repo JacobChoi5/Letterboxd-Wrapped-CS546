@@ -2,11 +2,133 @@ import {movies, /*actors, crew, genres, posters, studios, themes*/} from '../con
 import {ObjectId} from 'mongodb'
 import * as helpers from "../helpers.js"
 
-export const seedDatabase = async () => {
-  const movieCollection = await movies();
-  //using all the csv's
+import fs from "fs";
+import csv from "csv-parser";
+import path from "path";
+import { fileURLToPath } from "url";
 
-  //for every line of csv create new x
+
+export const seedDatabase = async () => {  
+  console.log("Starting to Seed")
+
+  const moviesList = await loadCsvAsArray("./database/movies.csv")
+
+  console.log("Movies has been loaded")
+
+  const posters = await loadCsvAsArray("./database/posters.csv")
+  const studios = await loadCsvAsArray("./database/studios.csv")
+  const themes = await loadCsvAsArray("./database/themes.csv")
+  const genres = await loadCsvAsArray("./database/genres.csv")
+  const actors = await loadCsvAsArray("./database/actors.csv")
+  const crew = await loadCsvAsArray("./database/crew.csv")
+  
+  console.log("csv's have been turned into arrays")
+  
+  const posterList = {}
+  for (const poster of posters) 
+  {
+    posterList[poster.id] = poster.link
+  }
+
+  const studiosGrouped = groupById(studios, "studio")
+  const themesGrouped = groupById(themes, "theme")
+  const genresGrouped = groupById(genres, "genre")
+
+  const directors = crew.filter((row) => row.role === "Director")
+  const directorsGrouped = groupById(directors, "name")
+
+  const actorsGrouped = {}
+
+  for (const row of actors) {
+    const id = row.id
+
+    if (!actorsGrouped[id]) {
+      actorsGrouped[id] = []
+    }
+    if (!row.role || row.role.trim() === ''){
+      row.role = "Unknown Role"
+    }
+    actorsGrouped[id].push(
+      {
+        name: row.name,
+        role: row.role
+      }
+    )
+  }
+
+
+  console.log("Arrays have been formatted")
+
+  for (const movie of moviesList) {
+    const id = movie.id
+    movie.posterUrl = posterList[id]
+    movie.studios = studiosGrouped[id] ?? ["Unknown Studios"];
+    movie.themes  = themesGrouped[id]  ?? ["Unknown Themes"];
+    movie.genres  = genresGrouped[id]  ?? ["Unknown Genres"];
+    movie.actors  = actorsGrouped[id]  ?? [{name: "Unknown Actors", role: "Unknown Roles"}];
+    movie.directors = directorsGrouped[id] ?? ["Unknown Directors"];
+
+
+    if (!movie.tagline || movie.tagline.trim() === '') {
+      movie.tagline = "No Tagline"
+    }
+    if (!movie.description || movie.description.trim() === '') {
+      movie.description = "No Description"
+    }
+    if (!movie.posterUrl || movie.posterUrl.trim() === '') {
+      movie.posterUrl = "https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg?20200913095930"
+    }
+    if (!movie.rating || movie.rating.trim() === '') {
+      movie.rating = "3.24"
+    }
+    if (!movie.minute || movie.minute.trim() === '') {
+      movie.minute = "66"
+    }
+    if (!movie.date || movie.date.trim() === '') {
+      movie.date = "1999"
+    }
+
+    console.log(movie)
+
+    await createNewMovie(
+      Number(movie.id),
+      movie.name,
+      Number(movie.date),
+      movie.tagline ,
+      movie.description,
+      Number(movie.minute),
+      Number(movie.rating),
+      movie.directors,
+      movie.actors,
+      movie.genres,
+      movie.posterUrl,
+      movie.themes,
+      movie.studios
+    )
+  }
+
+}
+
+//https://www.npmjs.com/package/csv-parser
+const loadCsvAsArray = (csvFilePath) => {
+  return new Promise((resolve, reject) => {
+    const arr = [];
+    fs.createReadStream(csvFilePath)
+      .pipe(csv())
+      .on("data", (data) => arr.push(data))
+      .on("end", () => resolve(arr))
+      .on("error", reject);
+  });
+}
+
+const groupById = (arr, key) => {
+  const output = {};
+  for (const row of arr) {
+    const id = row.id;
+    if (!output[id]) output[id] = [];
+    output[id].push(row[key]);
+  }
+  return output;
 }
 
 export const createNewMovie = async (
@@ -32,7 +154,7 @@ export const createNewMovie = async (
 
   helpers.checkValidString(name, "Movie Name")
 
-  if (!Number.isInteger(date) || date < 1800 || date > new Date().getFullYear() + 1) 
+  if (!Number.isInteger(date) || date < 1800 || date > 2050) 
   {
     throw 'Invalid release year';
   }
@@ -87,7 +209,8 @@ export const createNewMovie = async (
   helpers.checkValidStringArray(studios, "Studios")
 
   const movieCollection = await movies();
-  let newMovie = {
+  let newMovie = 
+  {
     _id,
     name,
     date,
@@ -113,6 +236,58 @@ export const createNewMovie = async (
   // const movie = await getMovieById(newId);
   return newId;
 }
+
+export const getMovieById = async (id) => {
+  if (!Number.isInteger(id) || id <= 0) 
+  {
+    throw "Movie ID must be a positive integer";
+  }
+  const movieCollection = await movies();
+  const movie = await movieCollection.findOne({ _id: id });
+  if (!movie) 
+  {
+    throw "No movie with that id";
+  }
+  return movie;
+};
+
+export const getMoviesByDirector = async (name) => {
+  helpers.checkValidString(name, "Director name");
+  const movieCollection = await movies();
+  return movieCollection.find({directors: name.trim() }).toArray();
+};
+
+export const getMoviesByActor = async (name) => {
+  helpers.checkValidString(name, "Actor name");
+  const movieCollection = await movies();
+  return movieCollection.find({"actors.name": name.trim() }).toArray();
+};
+
+export const getMoviesByGenre = async (genre) => {
+  helpers.checkValidString(genre, "Genre");
+  const movieCollection = await movies();
+  return movieCollection.find({ genres: genre.trim() }).toArray();
+};
+
+export const getMoviesByStudio = async (studio) => {
+  helpers.checkValidString(studio, "Studio");
+  const movieCollection = await movies();
+  return movieCollection.find({ studios: studio.trim() }).toArray();
+};
+
+export const getMoviesByTheme = async (theme) => {
+  helpers.checkValidString(theme, "Theme");
+  const movieCollection = await movies();
+  return movieCollection.find({ themes: theme.trim() }).toArray();
+};
+
+export const getMoviesByYear = async (year) => {
+  if (!Number.isInteger(year) || year < 1800 || year > 2050)
+    throw "Invalid year";
+  const movieCollection = await movies();
+  return movieCollection.find({ date: year }).toArray();
+};
+
 
 /*
 These may be valuable for other search functions however may be unneccesary if all is held in the movie collection
