@@ -1,5 +1,6 @@
 import { checkValidString, checkValidAge, checkValidId } from "../helpers.js";
-import * as userMovieData from "usersMovieData.js";
+import * as csvData from "usersMovieData.js";
+import * as movieData from "movies.js";
 /*
 Current Issues:
 - Does not store ratingID (do not know what the userMovieData collection looks like yet)
@@ -29,6 +30,13 @@ export const createAccount = async (
   //valide age
   checkValidAge(age);
 
+  //ensure there are no duplicate usernames
+  if (zip_files) {
+    statistics = calculateStatistics;
+  } else {
+    statistics = {};
+  }
+
   let newAccount = {
     username: username,
     password: password,
@@ -41,7 +49,7 @@ export const createAccount = async (
     //ratingId: ratingId,
     followers: [],
     following: [],
-    statistics: {},
+    statistics: statistics,
   };
 
   const accountCollection = await accounts();
@@ -53,6 +61,178 @@ export const createAccount = async (
 
   const account = await getAccountById(newId);
   return account;
+};
+
+export const calculateStatistics = async () => {
+  let files = csvData.unZip(zip_files);
+  if (!files) throw "Error: Could not unzip files";
+  let parsedObjects = csvData.parse(files);
+  if (!parsedObjects) throw "Error: Could not parse csv files";
+
+  let movies_watched = csvData.getAllMoviesWatched(id);
+  if (!movies_watched) throw "Could not get all movies";
+
+  let genre_list = [];
+  let director_list = [];
+  let actor_list = [];
+  let rating_list = [];
+  let duration_list = [];
+
+  //fix the name of the_movie[...]
+  for (let movie of movies_watched) {
+    let the_movie = movieData.getMovieById(movie[movieId]);
+    genre_list.push(the_movie[genres]);
+    director_list.push(the_movie[directors]);
+    actor_list.push(the_movie[actors]);
+    rating_list.push(the_movie[rating]);
+    duration_list.push(the_movie[minute]);
+  }
+  genre_list.flat();
+  director_list.flat();
+  actor_list.flat();
+
+  //Top 3 genres: top_3_genres
+  let genre_count = {};
+  for (let genre of genre_list) {
+    genre_count[genre] = (genre_count[genre] || 0) + 1;
+  }
+
+  let top_genre = "";
+  let top_genre_count = 0;
+
+  for (let str in genre_count) {
+    if (genre_count[str] > top_genre_count) {
+      top_genre_count = genre_count[str];
+      top_genre = str;
+    }
+  }
+  let genre1 = top_genre;
+  delete genre_count[top_genre];
+  top_genre = "";
+  top_genre_count = 0;
+
+  for (let str in genre_count) {
+    if (genre_count[str] > top_genre_count) {
+      top_genre_count = genre_count[str];
+      top_genre = str;
+    }
+  }
+  let genre2 = top_genre;
+  delete genre_count[top_genre];
+  top_genre = "";
+  top_genre_count = 0;
+
+  for (let str in genre_count) {
+    if (genre_count[str] > top_genre_count) {
+      top_genre_count = genre_count[str];
+      top_genre = str;
+    }
+  }
+  let genre3 = top_genre;
+  let top_3_genres = [genre1, genre2, genre3];
+
+  //Top 3 directors: top_3_directors
+  //Top 3 genres: top_3_genres
+  let director_count = {};
+  for (let director of director_list) {
+    director_count[director] = (director_count[director] || 0) + 1;
+  }
+
+  let top_director = "";
+  let top_director_count = 0;
+
+  for (let str in director_count) {
+    if (director_count[str] > top_director_count) {
+      top_director_count = director_count[str];
+      top_director = str;
+    }
+  }
+  let director1 = top_director;
+  delete director_count[top_director];
+  top_director = "";
+  top_director_count = 0;
+
+  for (let str in director_count) {
+    if (director_count[str] > top_director_count) {
+      top_director_count = director_count[str];
+      top_director = str;
+    }
+  }
+  let director2 = top_director;
+  delete director_count[top_director];
+  top_director = "";
+  top_director_count = 0;
+
+  for (let str in director_count) {
+    if (director_count[str] > top_director_count) {
+      top_director_count = director_count[str];
+      top_director = str;
+    }
+  }
+  let director3 = top_director;
+  let top_3_director = [director1, director2, director3];
+
+  //Top 3 actors: top_3_actors
+  let actor_count = {};
+  for (let actor of actor_list) {
+    let name = actor.name;
+    actor_count[name] = (actor_count[name] || 0) + 1;
+  }
+
+  let top_actor = "";
+  let top_count = 0;
+
+  for (let str in actor_count) {
+    if (actor_count[str] > top_count) {
+      top_count = actor_count[str];
+      top_actor = str;
+    }
+  }
+  let actor1 = top_actor;
+  delete actor_count[actor1];
+  top_actor = "";
+  top_count = 0;
+
+  for (let str in actor_count) {
+    if (actor_count[str] > top_count) {
+      top_count = actor_count[str];
+      top_actor = str;
+    }
+  }
+  let actor2 = top_actor;
+  delete actor_count[actor2];
+  top_actor = "";
+  top_count = 0;
+
+  for (let str in actor_count) {
+    if (actor_count[str] > top_count) {
+      top_count = actor_count[str];
+      top_actor = str;
+    }
+  }
+  let actor3 = top_actor;
+
+  let top_3_actors = [actor1, actor2, actor3];
+
+  //Average Movie Rating: average_movie_rating
+  let rating_count = 0;
+  let total = 0;
+  for (let movie_rating of rating_list) {
+    total += movie_rating;
+    count++;
+  }
+  let average_movie_rating = total / count;
+
+  //Average difference between the user's rating and global movie averages
+  //IDKKKKKKKKKK
+
+  //Hours spent watching movies: hours_watching_movies
+  let duration_count = 0;
+  for (let duration of duration_list) {
+    duration_count += duration;
+  }
+
+  let hours_watching_movies = duration_count / 60;
 };
 
 export const getAllAccounts = async () => {
