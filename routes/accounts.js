@@ -86,7 +86,7 @@ router.route('/signupconfirm').get(async (req, res) => {
         });
     }
     try {
-        res.render('signupconfirm', { Title: "Signup Confirmation", successMessage: `Success! ${account.username} has been successfully created!`})
+        res.render('success', { Title: "Signup Confirmation", successMessage: `${account.username} has been successfully created!`})
     } catch (e) {
         return res.status(500).render('error', {
             errorMessage: 'Failed to render signupconfirm page: ' + e,
@@ -106,12 +106,28 @@ router.route('/myaccount').get(async (req, res) => {
     }
 })
 
-router.route('/mydata').get(async (req, res) => {
+router.route('/uploaddata').get(async (req, res) => {
     try {
-        res.render('mydata', { Title: "My Data" })
+        res.render('uploaddata', { Title: "My Data" })
     } catch (e) {
         return res.status(500).render('error', {
             errorMessage: 'Failed to render data page: ' + e,
+            class: 'page-fail'
+        })
+    }
+})
+
+router.route('/uploaddata').post(async (req, res) =>{
+    try{
+        
+    }catch(e){
+
+    }
+    try {
+        res.render('success', { Title: "Data Upload", successMessage: `Data has been successfully uploaded!`})
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Failed to render Data Upload Success page: ' + e,
             class: 'page-fail'
         })
     }
@@ -153,7 +169,7 @@ router.route('/accountlookupresults').post(async (req, res) => {
     }
     try {
         let accounts = accountData.searchAccountsByUsername(accountlookupdata.accountName)
-        res.render('accountlookupresults', { accounts: accounts, accountName: accountName, Title: accountlookupdata.accountName + " Results" })
+        res.render('accountlookupresults', { accounts: accounts, Title: accountlookupdata.accountName + " Results" })
     } catch (e) {
         return res.status(500).render('error', {
             errorMessage: `We're sorry, but no results were found for ${accountlookupdata.accountName}`,
