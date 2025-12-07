@@ -65,10 +65,7 @@ export const createAccount = async (
 };
 
 export const calculateStatistics = async () => {
-  let files = csvData.unZip(zip_files);
-  if (!files) throw "Error: Could not unzip files";
-  let parsedObjects = csvData.parse(files);
-  if (!parsedObjects) throw "Error: Could not parse csv files";
+  importAllUserData(id, zip_files);
 
   let movies_watched = csvData.getAllMoviesWatched(id);
   if (!movies_watched) throw "Could not get all movies";
@@ -76,16 +73,15 @@ export const calculateStatistics = async () => {
   let genre_list = [];
   let director_list = [];
   let actor_list = [];
-  let rating_list = [];
+  let global_rating_list = [];
   let duration_list = [];
 
-  //fix the name of the_movie[...]
   for (let movie of movies_watched) {
     let the_movie = movieData.getMovieById(movie[movieId]);
     genre_list.push(the_movie[genres]);
     director_list.push(the_movie[directors]);
     actor_list.push(the_movie[actors]);
-    rating_list.push(the_movie[rating]);
+    global_rating_list.push(the_movie[rating]);
     duration_list.push(the_movie[minute]);
   }
   genre_list.flat();
@@ -215,17 +211,31 @@ export const calculateStatistics = async () => {
 
   let top_3_actors = [actor1, actor2, actor3];
 
-  //Average Movie Rating: average_movie_rating
+  //Average User Movie Rating: average_movie_rating
+  let rating_list = [];
+  for (let movie of movies_watched) {
+    rating_list.push(csvData.getRating(movie[movieId], id));
+  }
+
   let rating_count = 0;
   let total = 0;
-  for (let movie_rating of rating_list) {
-    total += movie_rating;
-    count++;
+  for (let moving_rating of rating_list) {
+    total += moving_rating;
+    rating_count++;
   }
-  let average_movie_rating = total / count;
 
-  //Average difference between the user's rating and global movie averages
-  //IDKKKKKKKKKK
+  let average_movie_rating = total / rating_count;
+
+  //Average Different between user's rating and global movie averages: rating_difference
+  let global_rating_count = 0;
+  let global_total = 0;
+  for (let global_movie_rating of global_rating_list) {
+    global_total += global_movie_rating;
+    global_rating_count++;
+  }
+  let global_average_movie_rating = gloval_total / global_rating_count;
+
+  let rating_difference = average_movie_rating - global_average_movie_rating;
 
   //Hours spent watching movies: hours_watching_movies
   let duration_count = 0;
@@ -234,149 +244,242 @@ export const calculateStatistics = async () => {
   }
 
   let hours_watching_movies = duration_count / 60;
-};
 
+  //Recomendations
+
+  //Recommendations based on genres
+  let popularity_number = 1000000;
+  let movie_genre_recommendation_list = [];
+
+  while (true) {
+    let popular_movie = getMovieByPopularity(popularity_number);
+
+    if (!popular_movie) break;
+
+    if (
+      popular_movie.genres.includes(genre1) ||
+      popular_movie.genres.includes(genre2) ||
+      popular_movie.genres.includes(genre3)
+    ) {
+      let alreadyWatched = movies_watched.some(
+        (movie) => movie["name"] === popular_movie["name"]
+      );
+
+      if (!alreadyWatched) {
+        movie_genre_recommendation_list.push(popular_movie);
+      }
+
+      if (movie_genre_recommendation_list.length === 3) break;
+    }
+
+    popularity_number++;
+  }
+
+  //Recommendations based off actor
+  popularity_number = 1000000;
+  movie_actor_recommendation_list = [];
+  while (true) {
+    let popular_movie = getMovieByPopularity(popularity_number);
+
+    if (!popular_movie) break;
+
+    if (
+      popular_movie.actors.name.includes(actor1) ||
+      popular_movie.actors.name.includes(actor2) ||
+      popular_movie.actors.name.includes(actor3)
+    ) {
+      let alreadyWatched = movies_watched.some(
+        (movie) => movie["name"] === popular_movie["name"]
+      );
+
+      if (!alreadyWatched) {
+        movie_actor_recommendation_list.push(popular_movie);
+      }
+
+      if (movie_actor_recommendation_list.length === 3) break;
+    }
+
+    popularity_number++;
+  }
+
+  //Recommendations based off director
+  popularity_number = 1000000;
+  movie_director_recommendation_list = [];
+  while (true) {
+    let popular_movie = getMovieByPopularity(popularity_number);
+
+    if (!popular_movie) break;
+
+    if (
+      popular_movie.director.includes(director1) ||
+      popular_movie.director.includes(director2) ||
+      popular_movie.director.includes(director3)
+    ) {
+      let alreadyWatched = movies_watched.some(
+        (movie) => movie["name"] === popular_movie["name"]
+      );
+
+      if (!alreadyWatched) {
+        movie_actor_recommendation_list.push(popular_movie);
+      }
+
+      if (movie_actor_recommendation_list.length === 3) break;
+    }
+
+    popularity_number++;
+  }
+
+  let movie_recommendations = {
+    genre_based: movie_genre_recommendation_list,
+    actor_based: movie_actor_recommendation_list,
+    director_based: movie_director_recommendation_list,
+  };
+
+  let statistics = {
+    genres: top_3_genres,
+    directors: top_3_director,
+    actors: top_3_actors,
+    rating: average_movie_rating,
+    global_difference: average_distance_from_global,
+    hours_watched: hours_watching_movies,
+    recommendations: movie_recommendations,
+  };
+  return statistics;
+};
 
 // Imports the user’s Letterboxd ZIP, merges it into their movie data in MongoDB,
 // and refreshes all profile statistics. This is what creates the data that our
 // getters/setters later read and update within calculateStatistics().
 export const importAllUserData = async (userId, zipBuffer) => {
-    checkValidId(userId);
-    const accountCol = await accounts();
-    const movieCol = await userMovieData();
+  checkValidId(userId);
+  const accountCol = await accounts();
+  const movieCol = await userMovieData();
 
-    const user = await accountCol.findOne({ _id: new ObjectId(userId) });
-    if (!user) 
-      {
-        throw "User not found.";
+  const user = await accountCol.findOne({ _id: new ObjectId(userId) });
+  if (!user) {
+    throw "User not found.";
+  }
+
+  // Extract CSV text
+  const extracted = await unZip(zipBuffer);
+  const diaryCSV = extracted.diaryCSV;
+  const ratingsCSV = extracted.ratingsCSV;
+  const reviewsCSV = extracted.reviewsCSV;
+
+  if (!diaryCSV && !ratingsCSV && !reviewsCSV) {
+    throw "ZIP file did not contain diary.csv, ratings.csv, or reviews.csv.";
+  }
+
+  // Convert CSV text to row objects
+  let diaryRows = [];
+  if (diaryCSV) {
+    diaryRows = parse(diaryCSV);
+  }
+
+  let ratingRows = [];
+  if (ratingsCSV) {
+    ratingRows = parse(ratingsCSV);
+  }
+
+  let reviewRows = [];
+  if (reviewsCSV) {
+    reviewRows = parse(reviewsCSV);
+  }
+
+  //Process Diary (movie name + date watched)
+  for (let i = 0; i < diaryRows.length; i++) {
+    const row = diaryRows[i];
+
+    const movieId = row["Letterboxd URI"];
+    const movieName = row["Name"] || "";
+    const dateWatched = row["Date"] || "";
+
+    const existing = await movieCol.findOne({
+      userId: userId,
+      movieId: movieId,
+    });
+
+    if (existing) {
+      await movieCol.updateOne(
+        { userId: userId, movieId: movieId },
+        { $set: { movieName: movieName, dateWatched: dateWatched } }
+      );
+    } else {
+      await movieCol.insertOne({
+        userId: userId,
+        movieId: movieId,
+        movieName: movieName,
+        dateWatched: dateWatched,
+        rating: null,
+        rewatchCount: 0,
+        reviewDescription: "",
+      });
     }
+  }
 
-    // Extract CSV text
-    const extracted = await unZip(zipBuffer);
-    const diaryCSV = extracted.diaryCSV;
-    const ratingsCSV = extracted.ratingsCSV;
-    const reviewsCSV = extracted.reviewsCSV;
+  //  Process Ratings
+  for (let i = 0; i < ratingRows.length; i++) {
+    const row = ratingRows[i];
 
-    if (!diaryCSV && !ratingsCSV && !reviewsCSV) 
-      {
-        throw "ZIP file did not contain diary.csv, ratings.csv, or reviews.csv.";
+    const movieId = row["Letterboxd URI"];
+    const rating = Number(row["Rating"]);
+
+    const existing = await movieCol.findOne({
+      userId: userId,
+      movieId: movieId,
+    });
+
+    if (existing) {
+      await movieCol.updateOne(
+        { userId: userId, movieId: movieId },
+        { $set: { rating: rating } }
+      );
+    } else {
+      await movieCol.insertOne({
+        userId: userId,
+        movieId: movieId,
+        movieName: "",
+        dateWatched: "",
+        rating: rating,
+        rewatchCount: 0,
+        reviewDescription: "",
+      });
     }
+  }
 
-    // Convert CSV text to row objects
-    let diaryRows = [];
-    if (diaryCSV) 
-      {
-        diaryRows = parse(diaryCSV);
-      }
+  //Process Reviews
+  for (let i = 0; i < reviewRows.length; i++) {
+    const row = reviewRows[i];
 
-    let ratingRows = [];
-    if (ratingsCSV) 
-      {
-      ratingRows = parse(ratingsCSV);
+    const movieId = row["Letterboxd URI"];
+    const reviewText = row["Review"] || "";
+
+    const existing = await movieCol.findOne({
+      userId: userId,
+      movieId: movieId,
+    });
+
+    if (existing) {
+      await movieCol.updateOne(
+        { userId: userId, movieId: movieId },
+        { $set: { reviewDescription: reviewText } }
+      );
+    } else {
+      await movieCol.insertOne({
+        userId: userId,
+        movieId: movieId,
+        movieName: "",
+        dateWatched: "",
+        rating: null,
+        rewatchCount: 0,
+        reviewDescription: reviewText,
+      });
     }
+  }
+  // calcualte  statistics properly after importing everything
+  await calculateStatistics(userId);
 
-    let reviewRows = [];
-    if (reviewsCSV) 
-      {
-        reviewRows = parse(reviewsCSV);
-    }
-
-    //Process Diary (movie name + date watched)
-    for (let i = 0; i < diaryRows.length; i++) 
-      {
-        const row = diaryRows[i];
-
-        const movieId = row["Letterboxd URI"];
-        const movieName = row["Name"] || "";
-        const dateWatched = row["Date"] || "";
-
-        const existing = await movieCol.findOne({ userId: userId, movieId: movieId });
-
-        if (existing) 
-          {
-            await movieCol.updateOne(
-                { userId: userId, movieId: movieId },
-                { $set: { movieName: movieName, dateWatched: dateWatched } }
-            );
-        }
-         else 
-          {
-            await movieCol.insertOne({
-                userId: userId,
-                movieId: movieId,
-                movieName: movieName,
-                dateWatched: dateWatched,
-                rating: null,
-                rewatchCount: 0,
-                reviewDescription: ""
-            });
-        }
-    }
-
-    //  Process Ratings
-    for (let i = 0; i < ratingRows.length; i++)
-       {
-        const row = ratingRows[i];
-
-        const movieId = row["Letterboxd URI"];
-        const rating = Number(row["Rating"]);
-
-        const existing = await movieCol.findOne({ userId: userId, movieId: movieId });
-
-        if (existing) 
-          {
-            await movieCol.updateOne(
-                { userId: userId, movieId: movieId },
-                { $set: { rating: rating } }
-            );
-        } 
-        else
-           {
-            await movieCol.insertOne({
-                userId: userId,
-                movieId: movieId,
-                movieName: "",
-                dateWatched: "",
-                rating: rating,
-                rewatchCount: 0,
-                reviewDescription: ""
-            });
-        }
-    }
-
-    //Process Reviews
-    for (let i = 0; i < reviewRows.length; i++) {
-        const row = reviewRows[i];
-
-        const movieId = row["Letterboxd URI"];
-        const reviewText = row["Review"] || "";
-
-        const existing = await movieCol.findOne({ userId: userId, movieId: movieId });
-
-        if (existing) 
-          {
-            await movieCol.updateOne(
-                { userId: userId, movieId: movieId },
-                { $set: { reviewDescription: reviewText } }
-            );
-        } 
-        else 
-          {
-            await movieCol.insertOne({
-                userId: userId,
-                movieId: movieId,
-                movieName: "",
-                dateWatched: "",
-                rating: null,
-                rewatchCount: 0,
-                reviewDescription: reviewText
-            });
-        }
-    }
-    // calcualte  statistics properly after importing everything
-    await calculateStatistics(userId);
-
-    return "Import finished";
+  return "Import finished";
 };
 
 export const getAllAccounts = async () => {
