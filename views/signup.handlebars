@@ -1,6 +1,7 @@
 <!--TODO-->
 <main>
-    <form action="/movies/myaccount" method="POST" class="signup">
+    <div id="error"></div>
+    <form id="signupform">
     <label for="username">Username</label>
     <input type="text" id="username" name="username" required>
 
@@ -15,8 +16,13 @@
 
     <label for"description">Description</label>
     <input type="text" id="descriptino" name="description">
-    
+
+    <label for="file">Upload Zip File:</label>
+    <input type="file" id="file" name="file" accept=".zip">
+
     <button type="submit">Sign Up</button>
 
     </form>
 </main>
+
+<script src="../public/js/signup.js"></script>

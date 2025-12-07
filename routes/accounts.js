@@ -48,8 +48,27 @@ router.route('/createaccount').get(async (req, res) => {
     }
 })
 
+router.route('/login').get(async (req, res) => {
+    require('bcrypt')
+    //add logic for getting username and password
+    try {
+        account = accountData.getAccountByUsername(username)
+        if (await bcrypt.compare(password, account.password)) {
+            //my account is account
+        } else {
+            throw "invalid credentials"
+        }
+    } catch (e) {
+        return res.status(401).render('error', {
+            errorMessage: 'Username or password does not match: ' + e,
+            class: 'login-fail'
+        })
+    }
+})
+
 router.route('/signupconfirm').get(async (req, res) => {
     const accountsignupdata = req.body
+    const bcrypt = require('bcryptjs');
     let account = {}
     try {
         helpers.checkValidString(accountsignupdata.username)
@@ -59,10 +78,6 @@ router.route('/signupconfirm').get(async (req, res) => {
         helpers.checkValidString(accountsignupdata.password)
         accountsignupdata.password = accountsignupdata.password.trim()
         helpers.checkValidString(accountsignupdata.password)
-
-        helpers.checkValidString(accountsignupdata.cpassword)
-        accountsignupdata.cpassword = accountsignupdata.cpassword.trim()
-        helpers.checkValidString(accountsignupdata.cpassword)
 
         helpers.checkValidNumber(accountsignupdata.age)
 
@@ -74,11 +89,10 @@ router.route('/signupconfirm').get(async (req, res) => {
             helpers.checkValidString(description)
         }
 
-        if (password !== cpassword) {
-            throw "passwords do not match"
-        }
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
-        account = await createAccount(accountsignupdata.username, accountsignupdata.password, accountsignupdata.age, false, description, [], [], [], [], [], {})
+        account = await createAccount(accountsignupdata.username, hashedPassword, accountsignupdata.age, false, description, [], [], [], [], [], {})
     } catch (e) {
         return res.status(400).render('error', {
             errorMessage: 'Invalid input data',
@@ -86,7 +100,7 @@ router.route('/signupconfirm').get(async (req, res) => {
         });
     }
     try {
-        res.render('success', { Title: "Signup Confirmation", successMessage: `${account.username} has been successfully created!`})
+        res.render('success', { Title: "Signup Confirmation", successMessage: `${account.username} has been successfully created!` })
     } catch (e) {
         return res.status(500).render('error', {
             errorMessage: 'Failed to render signupconfirm page: ' + e,
@@ -117,14 +131,14 @@ router.route('/uploaddata').get(async (req, res) => {
     }
 })
 
-router.route('/uploaddata').post(async (req, res) =>{
-    try{
-        
-    }catch(e){
+router.route('/uploaddata').post(async (req, res) => {
+    try {
+
+    } catch (e) {
 
     }
     try {
-        res.render('success', { Title: "Data Upload", successMessage: `Data has been successfully uploaded!`})
+        res.render('success', { Title: "Data Upload", successMessage: `Data has been successfully uploaded!` })
     } catch (e) {
         return res.status(500).render('error', {
             errorMessage: 'Failed to render Data Upload Success page: ' + e,
