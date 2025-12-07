@@ -1,0 +1,43 @@
+<main>
+    <form action="/movies/moviecreated" method="POST" class="new-movie-form">
+
+        <label for="name">Movie Name</label>
+        <input type="text" id="name" name="name" placeholder="Movie Name" required>
+
+        <label for="date">Release Year</label>
+        <input type="number" id="date" name="date" min="1800" max="2100" placeholder="2025" required>
+
+        <label for="tagline">Tagline</label>
+        <input type="text" id="tagline" name="tagline" placeholder="Optional tagline">
+
+        <label for="description">Description</label>
+        <textarea id="description" name="description" placeholder="Short movie description"></textarea>
+
+        <label for="minute">Length (minutes)</label>
+        <input type="number" id="minute" name="minute" min="1" placeholder="120" required>
+
+        <label for="rating">Rating (0-5)</label>
+        <input type="number" id="rating" name="rating" min="1" max="5" step="0.1" placeholder="3.5" required>
+
+        <label for="posterUrl">Poster URL</label>
+        <input type="url" id="posterUrl" name="posterUrl" placeholder="https://example.com/poster.jpg">
+
+        <label for="directors">Directors (comma-separated)</label>
+        <input type="text" id="directors" name="directors" placeholder="Director One, Director Two">
+
+        <label for="genres">Genres (comma-separated)</label>
+        <input type="text" id="genres" name="genres" placeholder="Drama, Thriller">
+
+        <label for="themes">Themes (comma-separated)</label>
+        <input type="text" id="themes" name="themes" placeholder="Love, Revenge">
+
+        <label for="studios">Studios (comma-separated)</label>
+        <input type="text" id="studios" name="studios" placeholder="Warner Bros, A24">
+
+        <label for="actors">Actors (Name:Role, Name:Role)</label>
+        <input type="text" id="actors" name="actors" placeholder="Actor One:Role, Actor Two:Role">
+
+        <input type="submit" value="Submit">
+
+    </form>
+</main>

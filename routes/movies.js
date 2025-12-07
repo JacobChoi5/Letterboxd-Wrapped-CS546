@@ -16,14 +16,7 @@ router.route('/lookup').get(async (req, res) => {
 })
 
 router.route('/lookupresults').get(async (req, res) => {
-    try {
-        res.render('lookup', { Title: "Lookup" })
-    } catch (e) {
-        return res.status(500).render('error', {
-            errorMessage: 'Failed to render movie lookup page: ' + e,
-            class: 'page-fail'
-        })
-    }
+    //results of movielookup
 })
 
 router.route('/:id').get(async (req, res) => {
@@ -52,6 +45,24 @@ router.route('/:id').get(async (req, res) => {
 
 router.route('/newmovie').get(async (req, res) => {
     //creates new movie. will call createMovie()
+    try {
+        res.render('newmovie', { Title: "Create New Movie" })
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Failed to render movie creation page: ' + e,
+            class: 'page-fail'
+        })
+    }
+})
+
+router.route('/moviecreated').post(async (req, res) => {
+    //TODO
+    try {
+
+    } catch (e) {
+
+    }
+
 })
 
 export default router
