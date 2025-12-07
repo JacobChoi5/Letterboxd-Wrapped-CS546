@@ -48,6 +48,53 @@ router.route('/createaccount').get(async (req, res) => {
     }
 })
 
+router.route('/signupconfirm').get(async (req, res) => {
+    const accountsignupdata = req.body
+    let account = {}
+    try {
+        helpers.checkValidString(accountsignupdata.username)
+        accountsignupdata.username = accountsignupdata.username.trim()
+        helpers.checkValidString(accountsignupdata.username)
+
+        helpers.checkValidString(accountsignupdata.password)
+        accountsignupdata.password = accountsignupdata.password.trim()
+        helpers.checkValidString(accountsignupdata.password)
+
+        helpers.checkValidString(accountsignupdata.cpassword)
+        accountsignupdata.cpassword = accountsignupdata.cpassword.trim()
+        helpers.checkValidString(accountsignupdata.cpassword)
+
+        helpers.checkValidNumber(accountsignupdata.age)
+
+        let description = ""
+
+        if (accountsignupdata.description) {
+            helpers.checkValidString(accountsignupdata.description)
+            description = accountsignupdata.description.trim()
+            helpers.checkValidString(description)
+        }
+
+        if (password !== cpassword) {
+            throw "passwords do not match"
+        }
+
+        account = await createAccount(accountsignupdata.username, accountsignupdata.password, accountsignupdata.age, false, description, [], [], [], [], [], {})
+    } catch (e) {
+        return res.status(400).render('error', {
+            errorMessage: 'Invalid input data',
+            class: 'error'
+        });
+    }
+    try {
+        res.render('signupconfirm', { Title: "Signup Confirmation", successMessage: `Success! ${account.username} has been successfully created!`})
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Failed to render signupconfirm page: ' + e,
+            class: 'page-fail'
+        })
+    }
+})
+
 router.route('/myaccount').get(async (req, res) => {
     try {
         res.render('myaccount', { Title: "My Account" })
