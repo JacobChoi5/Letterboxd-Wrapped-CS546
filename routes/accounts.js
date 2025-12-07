@@ -92,13 +92,25 @@ router.route('/accountlookup').get(async (req, res) => {
     }
 })
 
-router.route('/accountlookupresults').get(async (req, res) => {
+router.route('/accountlookupresults').post(async (req, res) => {
+    const accountlookupdata = req.body
     try {
-        res.render('accountlookupresults', { Title: res.params.query })
+        helpers.checkValidString(accountlookupdata.accountName)
+        accountlookupdata.accountName = accountlookupdata.accountName.trim()
+        helpers.checkValidString(accountlookupdata.accountName)
+    } catch (e) {
+        return res.status(400).render('error', {
+            errorMessage: 'You must enter a search term!',
+            class: 'error'
+        });
+    }
+    try {
+        let accounts = accountData.searchAccountsByUsername(accountlookupdata.accountName)
+        res.render('accountlookupresults', { accounts: accounts, accountName: accountName, Title: accountlookupdata.accountName + " Results" })
     } catch (e) {
         return res.status(500).render('error', {
-            errorMessage: 'Failed to render account lookup results page: ' + e,
-            class: 'page-fail'
+            errorMessage: `We're sorry, but no results were found for ${accountlookupdata.accountName}`,
+            class: 'account-not-found'
         })
     }
 })
