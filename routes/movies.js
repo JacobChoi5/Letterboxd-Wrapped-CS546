@@ -16,7 +16,36 @@ router.route('/lookup').get(async (req, res) => {
 })
 
 router.route('/lookupresults').get(async (req, res) => {
+    let name = req.body.name
+    let movies = []
     //results of movielookup
+    try {
+        helpers.checkValidString(name)
+        name = name.trim()
+        helpers.checkValidString(name)
+    } catch (e) {
+        return res.status(400).render('error', {
+            errorMessage: 'You must enter a search term!',
+            class: 'error'
+        });
+    }
+    try {
+        movies = movieData.getMoviesByName(name)
+    } catch (e) {
+        return res.status(404).render('error', {
+            errorMessage: 'Movie Not Found: ' + e,
+            class: 'movie-not-found'
+        });
+    }
+    try {
+        res.render('accountlookupresults', { movies: movies, Title: name + " Results" })
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: `We're sorry, but no results were found for ${name}`,
+            class: 'account-not-found'
+        })
+    }
+
 
 })
 
@@ -51,6 +80,45 @@ router.route('/:id').get(async (req, res) => {
             class: 'page-fail'
         })
     }
+})
+
+router.route('/:id/add').post(async (req, res) => {
+    try {
+        helpers.checkValidString(req.params.id)
+        req.params.id = req.params.id.trim()
+        helpers.checkValidString(req.params.id)
+    } catch (e) {
+        return res.status(400).render('error', {
+            errorMessage: 'Error in id: ' + e,
+            class: 'invalid-id'
+        });
+    }
+    let movie = {}
+    try {
+        movie = await movieData.getMovieById(req.params.id)
+    } catch (e) {
+        return res.status(404).render('error', {
+            errorMessage: 'Movie Not Found: ' + e,
+            class: 'movie-not-found'
+        });
+    }
+    try{
+        accountData.addMovieById(req.params.id)
+    }catch(e){
+        return res.status(500).render('error', {
+            errorMessage: 'Could not add movie to account: ' + e,
+            class: 'add-error'
+        })
+    }
+    try{
+        res.render('success', {Title: movie.name, successMessage: `${movie.name} successfully added to account!`})
+    } catch(e){
+        return res.status(500).render('error', {
+            errorMessage: 'Failed to render movie creation page: ' + e,
+            class: 'page-fail'
+        })
+    }
+    
 })
 
 router.route('/newmovie').get(async (req, res) => {
@@ -173,7 +241,7 @@ router.route('/moviecreated').post(async (req, res) => {
 
 
     try {
-        res.render('moviecreated', { Title: "Movie Created", successMessage: `${name} Created Successfully` })
+        res.render('success', { Title: "Movie Created", successMessage: `${name} Created Successfully` })
     } catch (e) {
         return res.status(500).render('error', {
             errorMessage: 'Failed to render movie created page: ' + e,

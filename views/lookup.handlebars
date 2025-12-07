@@ -1,1 +1,13 @@
 <!--TODO-->
+<main>
+    <p>This page allows for search of a movie. Enter the movie name, and it will return the lookup result for that movie.</p>
+
+    <form action="/movies/lookupresults" method="POST" class="movie-lookup-form">
+        <label for="name">
+            Movie Name
+        </label>
+        <input id="name" type="text" name="name" placeholder="Movie Name" value="{{name}}">
+        <input type="submit" value="Submit">
+    </form>
+
+</main>
