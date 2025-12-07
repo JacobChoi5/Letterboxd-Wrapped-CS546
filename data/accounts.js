@@ -248,6 +248,92 @@ export const calculateStatistics = async () => {
   //Recomendations
 
   //Recommendations based on genres
+  let popularity_number = 1000000;
+  let movie_genre_recommendation_list = [];
+
+  while (true) {
+    let popular_movie = getMovieByPopularity(popularity_number);
+
+    if (!popular_movie) break;
+
+    if (
+      popular_movie.genres.includes(genre1) ||
+      popular_movie.genres.includes(genre2) ||
+      popular_movie.genres.includes(genre3)
+    ) {
+      let alreadyWatched = movies_watched.some(
+        (movie) => movie["name"] === popular_movie["name"]
+      );
+
+      if (!alreadyWatched) {
+        movie_genre_recommendation_list.push(popular_movie);
+      }
+
+      if (movie_genre_recommendation_list.length === 3) break;
+    }
+
+    popularity_number++;
+  }
+
+  //Recommendations based off actor
+  popularity_number = 1000000;
+  movie_actor_recommendation_list = [];
+  while (true) {
+    let popular_movie = getMovieByPopularity(popularity_number);
+
+    if (!popular_movie) break;
+
+    if (
+      popular_movie.actors.name.includes(actor1) ||
+      popular_movie.actors.name.includes(actor2) ||
+      popular_movie.actors.name.includes(actor3)
+    ) {
+      let alreadyWatched = movies_watched.some(
+        (movie) => movie["name"] === popular_movie["name"]
+      );
+
+      if (!alreadyWatched) {
+        movie_actor_recommendation_list.push(popular_movie);
+      }
+
+      if (movie_actor_recommendation_list.length === 3) break;
+    }
+
+    popularity_number++;
+  }
+
+  //Recommendations based off director
+  popularity_number = 1000000;
+  movie_director_recommendation_list = [];
+  while (true) {
+    let popular_movie = getMovieByPopularity(popularity_number);
+
+    if (!popular_movie) break;
+
+    if (
+      popular_movie.director.includes(director1) ||
+      popular_movie.director.includes(director2) ||
+      popular_movie.director.includes(director3)
+    ) {
+      let alreadyWatched = movies_watched.some(
+        (movie) => movie["name"] === popular_movie["name"]
+      );
+
+      if (!alreadyWatched) {
+        movie_actor_recommendation_list.push(popular_movie);
+      }
+
+      if (movie_actor_recommendation_list.length === 3) break;
+    }
+
+    popularity_number++;
+  }
+
+  let movie_recommendations = {
+    genre_based: movie_genre_recommendation_list,
+    actor_based: movie_actor_recommendation_list,
+    director_based: movie_director_recommendation_list,
+  };
 
   let statistics = {
     genres: top_3_genres,
@@ -256,6 +342,7 @@ export const calculateStatistics = async () => {
     rating: average_movie_rating,
     global_difference: average_distance_from_global,
     hours_watched: hours_watching_movies,
+    recommendations: movie_recommendations,
   };
   return statistics;
 };
@@ -456,8 +543,6 @@ export const deleteAccount = async (id) => {
   //check to make sure autoformattor isn't fucking this up.
   return { username: findAccount.username, deleted: true };
 };
-
-
 
 export const updateAccountInformation = async (
   id,
