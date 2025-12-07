@@ -91,6 +91,7 @@ export const seedDatabase = async () => {
     console.log(movie)
 
     await createNewMovie(
+      Number(movie.id),
       movie.name,
       Number(movie.date),
       movie.tagline ,
@@ -131,6 +132,7 @@ const groupById = (arr, key) => {
 }
 
 export const createNewMovie = async (
+  popularity,
   name,
   date,
   tagline,
@@ -145,9 +147,14 @@ export const createNewMovie = async (
   studios//array
 ) => {
 
+  if (!Number.isInteger(popularity) || popularity <= 0) 
+  {
+    throw 'Movie ID must be a positive integer';
+  }
+
   helpers.checkValidString(name, "Movie Name")
 
-  if (!Number.isInteger(date) || date < 1800 || date > 2050) 
+  if ((!Number.isInteger(date) || date < 1800 || date > 2050) && !Number.isNaN(date)) 
   {
     throw 'Invalid release year';
   }
@@ -155,12 +162,12 @@ export const createNewMovie = async (
   helpers.checkValidString(tagline, "Movie Tagline")
   helpers.checkValidString(description, "Movie Description")
   
-  if (!Number.isInteger(minute) || minute <= 0) 
+  if (!Number.isInteger(minute) && !Number.isNaN(minute)) 
   {
     throw 'Movie minutes must be a positive integer';
   }
 
-  if (typeof rating !== "number" || rating < 0 || rating > 5) 
+  if ((typeof rating !== "number" || rating < 0 || rating > 5) && !Number.isNaN(rating)) 
   {
     throw 'Rating must be a number between 0 and 5';
   }
@@ -206,6 +213,7 @@ export const createNewMovie = async (
   const movieCollection = await movies();
   let newMovie = 
   {
+    popularity,
     name,
     date,
     tagline,
@@ -233,7 +241,7 @@ export const createNewMovie = async (
 }
 
 export const getMovieById = async (id) => {
-  if (!Number.isInteger(id) || id <= 0) 
+  if (!ObjectId.isValid(id)) 
   {
     throw "Movie ID must be a positive integer";
   }
@@ -289,6 +297,103 @@ export const getMoviesByName = async (name) => {
   return movieCollection.find({ names: name.trim() }).toArray();
 };
 
+//super comment is for when a comment is made under another comment rather than just on the movie
+export const createComment = async (movieId, userId, username, text, superCommentId) => {
+  if (!movieId || !ObjectId.isValid(movieId)) 
+  {
+    throw "Movie ID must be a valid ObjectId";
+  }
+  if (!userId || !ObjectId.isValid(userId)) 
+  {
+    throw "User ID must be a valid ObjectId";
+  }
+  helpers.checkValidString(username, "Username");
+  helpers.checkValidString(text, "Comment Body");
+  if (superCommentId && !ObjectId.isValid(superCommentId)) 
+  {
+    throw "Super Comment ID must be a valid ObjectId";
+  }
+
+  let comment = {
+    _id: new ObjectId(),
+    userId,
+    username,
+    text,
+    postedAt: new Date(),
+    "likes": [],
+    "subcomments": []
+  }
+
+  let movie = await getMovieById(movieId);
+  let comments = movie.comments
+
+  if (superCommentId){
+    replyToComment(comments, superCommentId, comment);
+  } else {
+    comments.push(comment);
+  }
+  const movieCollection = await movies();
+
+  const awaitInfo = await movieCollection.updateOne({_id: movieId}, {$set: {comments: comments}});
+  if (!awaitInfo.acknowledged || awaitInfo.modifiedCount === 0)
+  {
+    throw 'Error: Could not add comment';
+  }
+  return comments;
+}
+
+const replyToComment = (comments, id, newComment) => {
+  for (let comment of comments) 
+  {
+    if (comment._id.toString() === id.toString()) 
+    {
+      comment.subcomments.push(newComment)
+      return comments
+    }
+    let newSubcomments = replyToComment(comment.subcomments, id, newComment)
+    if (newSubcomments)
+    {
+      comment.subcomments = newSubcomments;
+      return comments;
+    }
+  }
+  return null;
+}
+
+/* 
+//needs to return whole list of comments a
+const likeComment = (movieId, commentId, userId) => {
+  if (!movieId || !ObjectId.isValid(movieId)) 
+  {
+    throw "Movie ID must be a valid ObjectId";
+  }
+  if (!userId || !ObjectId.isValid(userId)) 
+  {
+    throw "User ID must be a valid ObjectId";
+  }
+  if (!commentId || !ObjectId.isValid(commentId)) 
+  {
+    throw "Comment ID must be a valid ObjectId";
+  }
+  
+
+
+  for (let comment of comments) 
+  {
+    if (comment._id.toString() === id.toString()) 
+    {
+      comment.subcomments.push(newComment)
+      return comments
+    }
+    let newSubcomments = replyToComment(comment.subcomments, id, newComment)
+    if (newSubcomments)
+    {
+      comment.subcomments = newSubcomments;
+      return comments;
+    }
+  }
+  return null;
+}
 
 /*
 These may be valuable for other search functions however may be unneccesary if all is held in the movie collection
