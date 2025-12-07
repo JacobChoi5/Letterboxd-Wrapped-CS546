@@ -1,1 +1,35 @@
 <!--TODO-->
+<main>
+    <p>Release year: {{movie.date}}</p>
+    <p>Tagline: {{movie.tagline}}</p>
+    <p>Description: {{movie.description}}</p>
+    <p>Length: {{movie.minute}} minutes</p>
+    <p>Rating: {{movie.rating}}</p>
+
+    <p>Directors:</p>
+    {{#each movie.directors}}
+    <p>{{this}}</p>
+    {{/each}}
+
+    <p>Actors:</p>
+    {{#each movie.actors}}
+    <p>{{this}}</p>
+    {{/each}}
+
+    <p>Genres:</p>
+    {{#each movie.genres}}
+    <p>{{this}}</p>
+    {{/each}}
+
+    <p>Themes:</p>
+    {{#each movie.themes}}
+    <p>{{this}}</p>
+    {{/each}}
+
+    <p>Studios:</p>
+    {{#each movie.studios}}
+    <p>{{this}}</p>
+    {{/each}}
+
+    <img src="{{movie.posterUrl}}">
+</main>
