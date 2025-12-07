@@ -1,6 +1,7 @@
 import { checkValidString, checkValidAge, checkValidId } from "../helpers.js";
-import * as csvData from "usersMovieData.js";
-import * as movieData from "movies.js";
+import * as csvData from "../data/usersMovieData.js";
+import * as movieData from "../data/movies.js";
+import { accounts, userMovieData } from "../config/mongoCollections.js";
 /*
 Current Issues:
 - Does not store ratingID (do not know what the userMovieData collection looks like yet)
@@ -233,6 +234,149 @@ export const calculateStatistics = async () => {
   }
 
   let hours_watching_movies = duration_count / 60;
+};
+
+
+// Imports the user’s Letterboxd ZIP, merges it into their movie data in MongoDB,
+// and refreshes all profile statistics. This is what creates the data that our
+// getters/setters later read and update within calculateStatistics().
+export const importAllUserData = async (userId, zipBuffer) => {
+    checkValidId(userId);
+    const accountCol = await accounts();
+    const movieCol = await userMovieData();
+
+    const user = await accountCol.findOne({ _id: new ObjectId(userId) });
+    if (!user) 
+      {
+        throw "User not found.";
+    }
+
+    // Extract CSV text
+    const extracted = await unZip(zipBuffer);
+    const diaryCSV = extracted.diaryCSV;
+    const ratingsCSV = extracted.ratingsCSV;
+    const reviewsCSV = extracted.reviewsCSV;
+
+    if (!diaryCSV && !ratingsCSV && !reviewsCSV) 
+      {
+        throw "ZIP file did not contain diary.csv, ratings.csv, or reviews.csv.";
+    }
+
+    // Convert CSV text to row objects
+    let diaryRows = [];
+    if (diaryCSV) 
+      {
+        diaryRows = parse(diaryCSV);
+      }
+
+    let ratingRows = [];
+    if (ratingsCSV) 
+      {
+      ratingRows = parse(ratingsCSV);
+    }
+
+    let reviewRows = [];
+    if (reviewsCSV) 
+      {
+        reviewRows = parse(reviewsCSV);
+    }
+
+    //Process Diary (movie name + date watched)
+    for (let i = 0; i < diaryRows.length; i++) 
+      {
+        const row = diaryRows[i];
+
+        const movieId = row["Letterboxd URI"];
+        const movieName = row["Name"] || "";
+        const dateWatched = row["Date"] || "";
+
+        const existing = await movieCol.findOne({ userId: userId, movieId: movieId });
+
+        if (existing) 
+          {
+            await movieCol.updateOne(
+                { userId: userId, movieId: movieId },
+                { $set: { movieName: movieName, dateWatched: dateWatched } }
+            );
+        }
+         else 
+          {
+            await movieCol.insertOne({
+                userId: userId,
+                movieId: movieId,
+                movieName: movieName,
+                dateWatched: dateWatched,
+                rating: null,
+                rewatchCount: 0,
+                reviewDescription: ""
+            });
+        }
+    }
+
+    //  Process Ratings
+    for (let i = 0; i < ratingRows.length; i++)
+       {
+        const row = ratingRows[i];
+
+        const movieId = row["Letterboxd URI"];
+        const rating = Number(row["Rating"]);
+
+        const existing = await movieCol.findOne({ userId: userId, movieId: movieId });
+
+        if (existing) 
+          {
+            await movieCol.updateOne(
+                { userId: userId, movieId: movieId },
+                { $set: { rating: rating } }
+            );
+        } 
+        else
+           {
+            await movieCol.insertOne({
+                userId: userId,
+                movieId: movieId,
+                movieName: "",
+                dateWatched: "",
+                rating: rating,
+                rewatchCount: 0,
+                reviewDescription: ""
+            });
+        }
+    }
+
+    //Process Reviews
+    for (let i = 0; i < reviewRows.length; i++) {
+        const row = reviewRows[i];
+
+        const movieId = row["Letterboxd URI"];
+        const reviewText = row["Review"] || "";
+
+        const existing = await movieCol.findOne({ userId: userId, movieId: movieId });
+
+        if (existing) 
+          {
+            await movieCol.updateOne(
+                { userId: userId, movieId: movieId },
+                { $set: { reviewDescription: reviewText } }
+            );
+        } 
+        else 
+          {
+            await movieCol.insertOne({
+                userId: userId,
+                movieId: movieId,
+                movieName: "",
+                dateWatched: "",
+                rating: null,
+                rewatchCount: 0,
+                reviewDescription: reviewText
+            });
+        }
+    }
+    // calcualte  statistics properly after importing everything
+    await calculateStatistics(userId);
+
+    return "Import finished";
 };
 
 export const getAllAccounts = async () => {
