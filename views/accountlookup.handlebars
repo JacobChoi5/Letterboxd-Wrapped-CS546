@@ -1,0 +1,12 @@
+<main>
+    <p>This page allows for search of an account. Enter the account name, and it will return the lookup result for that account.</p>
+
+    <form action="/accountlookupresults" method="POST" class="account-lookup-form">
+        <label for="accountName">
+            Account Name
+        </label>
+        <input id="accountName" type="text" name="accountName" placeholder="Account Name" value="{{accountName}}" class="full-width-input">
+        <input type="submit" value="Submit">
+    </form>
+
+</main>

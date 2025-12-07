@@ -15,4 +15,104 @@ router.route('/').get(async (req, res) => {
     }
 });
 
+router.route('/:id').get(async (req, res) => {
+    try {
+        helpers.checkValidId(id)
+        id = id.trim()
+        helpers.checkValidId(id)
+        account = accountData.getAccountById(id)
+    } catch (e) {
+        return res.status(400).render('error', {
+            errorMessage: 'Invalid account id: ' + e,
+            class: 'invalid-id'
+        })
+    }
+    try {
+        res.render('accountbyid', { Title: account.username })
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Failed to render account by id page: ' + e,
+            class: 'page-fail'
+        })
+    }
+})
+
+router.route('/createaccount').get(async (req, res) => {
+    try {
+        res.render('signup', { Title: "Signup" })
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Failed to render signup page: ' + e,
+            class: 'page-fail'
+        })
+    }
+})
+
+router.route('/myaccount').get(async (req, res) => {
+    try {
+        res.render('myaccount', { Title: "My Account" })
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Failed to render account page: ' + e,
+            class: 'page-fail'
+        })
+    }
+})
+
+router.route('/mydata').get(async (req, res) => {
+    try {
+        res.render('mydata', { Title: "My Data" })
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Failed to render data page: ' + e,
+            class: 'page-fail'
+        })
+    }
+})
+
+router.route('/addmovie').get(async (req, res) => {
+    try {
+        res.render('addmovie', { Title: "Add Movie" })
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Failed to render movie adding page: ' + e,
+            class: 'page-fail'
+        })
+    }
+})
+
+router.route('/accountlookup').get(async (req, res) => {
+    try {
+        res.render('accountlookup', { Title: "Account Lookup" })
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Failed to render account lookup page: ' + e,
+            class: 'page-fail'
+        })
+    }
+})
+
+router.route('/accountlookupresults').post(async (req, res) => {
+    const accountlookupdata = req.body
+    try {
+        helpers.checkValidString(accountlookupdata.accountName)
+        accountlookupdata.accountName = accountlookupdata.accountName.trim()
+        helpers.checkValidString(accountlookupdata.accountName)
+    } catch (e) {
+        return res.status(400).render('error', {
+            errorMessage: 'You must enter a search term!',
+            class: 'error'
+        });
+    }
+    try {
+        let accounts = accountData.searchAccountsByUsername(accountlookupdata.accountName)
+        res.render('accountlookupresults', { accounts: accounts, accountName: accountName, Title: accountlookupdata.accountName + " Results" })
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: `We're sorry, but no results were found for ${accountlookupdata.accountName}`,
+            class: 'account-not-found'
+        })
+    }
+})
+
 export default router
