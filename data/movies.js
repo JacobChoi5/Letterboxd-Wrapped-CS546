@@ -79,19 +79,18 @@ export const seedDatabase = async () => {
       movie.posterUrl = "https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg?20200913095930"
     }
     if (!movie.rating || movie.rating.trim() === '') {
-      movie.rating = "3.24"
+      movie.rating = NaN
     }
     if (!movie.minute || movie.minute.trim() === '') {
-      movie.minute = "66"
+      movie.minute = NaN
     }
     if (!movie.date || movie.date.trim() === '') {
-      movie.date = "1999"
+      movie.date = NaN
     }
 
     console.log(movie)
 
     await createNewMovie(
-      Number(movie.id),
       movie.name,
       Number(movie.date),
       movie.tagline ,
@@ -103,7 +102,7 @@ export const seedDatabase = async () => {
       movie.genres,
       movie.posterUrl,
       movie.themes,
-      movie.studios
+      movie.studios,
     )
   }
 
@@ -132,7 +131,6 @@ const groupById = (arr, key) => {
 }
 
 export const createNewMovie = async (
-  _id,
   name,
   date,
   tagline,
@@ -146,11 +144,6 @@ export const createNewMovie = async (
   themes,//array
   studios//array
 ) => {
-
-  if (!Number.isInteger(_id) || _id <= 0) 
-  {
-    throw 'Movie ID must be a positive integer';
-  }
 
   helpers.checkValidString(name, "Movie Name")
 
@@ -208,10 +201,11 @@ export const createNewMovie = async (
   helpers.checkValidStringArray(themes, "Themes")
   helpers.checkValidStringArray(studios, "Studios")
 
+  let comments = []
+
   const movieCollection = await movies();
   let newMovie = 
   {
-    _id,
     name,
     date,
     tagline,
@@ -223,7 +217,8 @@ export const createNewMovie = async (
     genres,
     posterUrl,
     themes,
-    studios
+    studios, 
+    comments
   }
 
   const insertInfo = await movieCollection.insertOne(newMovie);
@@ -286,6 +281,12 @@ export const getMoviesByYear = async (year) => {
     throw "Invalid year";
   const movieCollection = await movies();
   return movieCollection.find({ date: year }).toArray();
+};
+
+export const getMoviesByName = async (name) => {
+  helpers.checkValidString(name, "Name");
+  const movieCollection = await movies();
+  return movieCollection.find({ names: name.trim() }).toArray();
 };
 
 
