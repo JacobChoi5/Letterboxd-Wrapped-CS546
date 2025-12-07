@@ -1,4 +1,5 @@
 import { checkValidString, checkValidAge, checkValidId } from "../helpers.js";
+import * as userMovieData from "usersMovieData.js";
 /*
 Current Issues:
 - Does not store ratingID (do not know what the userMovieData collection looks like yet)
@@ -13,6 +14,7 @@ export const createAccount = async (
   age,
   isAdmin,
   profile_description,
+  all_movies,
   recently_watched,
   zip_files,
   //rating_id,
@@ -33,23 +35,24 @@ export const createAccount = async (
     age: age,
     isAdmin: false,
     profile_description: "",
+    all_movies: [],
     recently_watched: [],
     zip_files: [],
     //ratingId: ratingId,
     followers: [],
     following: [],
-    statistics: [],
+    statistics: {},
   };
 
-  const accountCollect = await accounts();
+  const accountCollection = await accounts();
   const insertInfo = await accountCollection.insertOne(newAccount);
   if (!insertInfo.acknowledged || !insertInfo.insertedId)
-    throw "Could not create account";
+    throw "Could not create account. Try again later.";
 
   const newId = insertInfo.insertedId.toString();
 
-  const course = await getAccountById(newId);
-  return course;
+  const account = await getAccountById(newId);
+  return account;
 };
 
 export const getAllAccounts = async () => {
@@ -75,6 +78,27 @@ export const getAccountById = async (id) => {
   return the_account;
 };
 
+export const getAccountByUsername = async (username) => {
+  checkValidString(username, "username");
+  const accountCollection = await accounts();
+  const account_results = await accountCollection
+    .find({
+      username: username,
+    })
+    .toArray();
+  if (!account_results.length) throw "No accounts with that username";
+  let account_list = [];
+
+  for (let i = 0; i < account_results.length; i++) {
+    let account = results[i];
+    account_list.push({
+      _id: account._id.toString(),
+      username: account.username,
+    });
+  }
+  return account;
+};
+
 export const deleteAccount = async (id) => {
   checkValidId(id, "id");
   let accountCollection = await accounts();
@@ -95,11 +119,12 @@ export const deleteAccount = async (id) => {
 
 export const updateAccountInformation = async (
   id,
-  username,
+  username, //need to check that it meats criteria
   password,
   age,
-  isAdmin,
+  isAdmin, //figure this out
   profile_description,
+  all_movies,
   recently_watched,
   zip_files,
   //rating_id,
@@ -113,6 +138,9 @@ export const updateAccountInformation = async (
   checkValidString(password, "password");
   checkValidAge(age);
   checkValidString(profile_description, "profile description");
+  for (let movie in all_movies) {
+    checkValidString(movie, "all movies");
+  }
   for (let movie in recently_watched) {
     checkValidString(movie, "recently watched movie");
   }
@@ -122,6 +150,61 @@ export const updateAccountInformation = async (
   for (let follow in following) {
     checkValidObject(follow, "following id");
   }
+
+  if (typeof statistics != "object") {
+    throw "statistics must be an object";
+  }
+
+  //check for null an array
+  if (statistics == null || Array.isArray(statistics)) {
+    throw "statistics cannot be null or an array";
+  }
+
+  //check that parameters exist
+  if (
+    !("average_distance_from_global" in logistics) ||
+    !("top_genre" in logistics) ||
+    !("top_directors" in logistics) ||
+    !("top_actors" in logistics) ||
+    !("top_studio" in logistics) ||
+    !("most_watched_time_period" in logistics) ||
+    !("most_watched_movie" in logistics) ||
+    !("movie_recommendations" in logistics) ||
+    !("last_time_updated" in logistics)
+  ) {
+    throw "one of the required keys/properties in statistics was not provided";
+  }
+
+  let validStatisticKeys = [
+    "average_distance_from_global",
+    "top_genre",
+    "top_directors",
+    "top_actors",
+    "top_studio",
+    "most_watched_time_period",
+    "most_watched_movie",
+    "movie_recommendations",
+    "last_time_updated",
+  ];
+
+  for (let key in validStatisticKeys) {
+    checkValidObject(key);
+    if (!validKeys.includes(key)) {
+      throw "statisitcs is missing a critical key.";
+    }
+  }
+
+  let newStatistics = {
+    average_distance_from_global: average_distance_from_global,
+    top_genre: top_genre,
+    top_directors: top_directors,
+    top_actors: top_actors,
+    top_studio: top_studio,
+    most_watched_time_period: most_watched_movie,
+    most_watched_movie: most_watched_movie,
+    movie_recommendations: movie_recommendations,
+    last_time_updated: last_time_updated,
+  };
 
   let userUpdateInfo = {
     id: id,
@@ -135,19 +218,19 @@ export const updateAccountInformation = async (
     //ratingId: ratingId,
     followers: followers,
     following: following,
-    statistics: statistics,
+    statistics: newStatistics,
   };
 
-  //Addding the course to the DB and returning the course
-  const courseCollection = await courses();
+  //Addding the account to the DB and returning the account
+  const accountCollection = await accounts();
 
-  const updateInfo = await courseCollection.findOneAndReplace(
+  const updateInfo = await accountCollection.findOneAndReplace(
     { _id: new ObjectId(id) },
     userUpdateInfo,
     { returnDocument: "after" }
   );
   if (!updateInfo)
-    throw `Error: Update failed, could not find a course with id of ${id}`;
+    throw `Error: Update failed, could not find a account with id of ${id}`;
 
   return updateInfo;
 };
