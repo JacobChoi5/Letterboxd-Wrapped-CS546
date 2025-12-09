@@ -6,10 +6,25 @@ const app = express();
 import session from 'express-session';
 import configRoutes from './routes/index.js';
 import multer from 'multer';
+import exphbs from 'express-handlebars';
 const upload = multer(); 
+import cookieParser from 'cookie-parser';
+//found multer on npm website when I searched up upload stuff middleware https://www.npmjs.com/package/multer 
+
+app.use(cookieParser());
+
+//this is for the partials to allow for the nested comment logic
+const handlebarsInstance = exphbs.create({
+  partialsDir: ['views/partials/']
+});
+
+app.engine('handlebars', handlebarsInstance.engine);
+app.set('view engine', 'handlebars');
 
 app.use(express.json());
-
+// What i need to do 
+// middleware cookie handling for checking is users logged in and hwat tjeir user name and id is  and 
+// d file uploads plus extra. how to see which account is signied in.
 app.use(
   session({
     name: 'Letterboxd_Session',
@@ -20,37 +35,67 @@ app.use(
   })
 );
 
-app.use('/secureRoute', (req, res, next) => {
-    if(!req.session.user) 
-      {
-      return res.redirect("/");
-      } 
-      else
-      {
-        next();
-      }
-});
-
-app.use('/login', (req, res, next) => {
+app.use((req,res,next) => {
   if(req.session.user)
-  {
-    res.redirect("/");
-  }
-  else
-  {
-  next();
-  }
+{
+   req.user = req.session.user;
+    req.userId = req.session.user._id;
+    req.username = req.session.user.username;
+}
+console.log("user logged in currently is " + req.user);
+
+next();
 });
 
-app.use('/upload', upload.single('zipfile'), (req, res, next) => {
+
+// if(req.sessionID != req.session)
+// {
+//   res.clearCookie('user');
+// }
+
+app.use('/uploaddata', upload.single('zipfile'), (req, res, next) => {
   next();
 });
+
+// export function requireLogin(req, res, next) 
+// {
+//   if (!req.session.user) 
+//     {
+//     return res.status(401).json({ error: "Login required" });
+//   }
+//   next();
+// }
+
+// app.use('/secureRoute', (req, res, next) => {
+//     if(!req.session.user) 
+//       {
+//       // return res.redirect("/");
+//       } 
+//       else
+//       {
+//         next();
+//       }
+// });
+
+// app.use('/login', (req, res, next) => {
+//   if(req.session.user)
+//   {
+//     // res.redirect("/");
+//   }
+//   else
+//   {
+//   next();
+//   }
+// });
+
+
 
 configRoutes(app);
 
 app.listen(3000, () => {
   console.log("We've now got a server!");
 });
+
 
 //ignore eveything below
 
@@ -122,4 +167,6 @@ try {
 console.log("Done");
 
 await closeConnection()
+
+
 

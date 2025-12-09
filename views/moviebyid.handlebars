@@ -12,7 +12,7 @@
 
     <p>Actors:</p>
     {{#each movie.actors}}
-    <p>{{this}}</p>
+    <p>{{this.name}} as {{this.role}}</p>
     {{/each}}
 
     <p>Genres:</p>
@@ -26,8 +26,13 @@
     {{/each}}
 
     <p>Studios:</p>
-    {{#each movie.studios}}
+    {{#each movie.studios}}]
     <p>{{this}}</p>
+    {{/each}}
+
+    <p>Comments:</p>
+    {{#each movie.comments}}
+    {{> comment}}
     {{/each}}
 
     <form action="/movies/{{movie._id}}/add" method="POST">

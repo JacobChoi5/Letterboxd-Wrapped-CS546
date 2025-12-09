@@ -2,24 +2,18 @@ import { checkValidString, checkValidAge, checkValidId } from "../helpers.js";
 import * as csvData from "../data/usersMovieData.js";
 import * as movieData from "../data/movies.js";
 import { accounts, userMovieData } from "../config/mongoCollections.js";
-/*
-Current Issues:
-- Does not store ratingID (do not know what the userMovieData collection looks like yet)
-- Does not update based on LetterBoxed Data
-    - Whenever a user updated their Letterboxd zip files, their statistics should change.
-      But we do no know what the structure of the data we will retieve from the zip files
-      looks like yet. So, i cannot update the data.
-*/
+import { ObjectId } from "mongodb";
+
+//ensure top actors does not have a logic issue
+
 export const createAccount = async (
   username,
   password,
   age,
   isAdmin,
+  isPrivate,
   profile_description,
-  all_movies,
-  recently_watched,
   zip_files,
-  //rating_id,
   followers,
   following
 ) => {
@@ -35,6 +29,7 @@ export const createAccount = async (
     password: password,
     age: age,
     isAdmin: false,
+    isPrivate: false,
     profile_description: "",
     all_movies: [],
     recently_watched: [],
@@ -54,19 +49,39 @@ export const createAccount = async (
   return account;
 };
 
+export const createStatsObject = async (id) => {
+  let all_time = await calculateStatistics(id, "all");
+  let year = await calculateStatistics(id, "year");
+  let month = await calculateStatistics(id, "month");
+
+  let statistics_object = { all_time, year, month };
+  return statistics_object;
+};
+
 export const calculateStatistics = async (id, period) => {
   // all, year, month
-  let account = getAccountById(id);
-  importAllUserData(id, account["zip_files"]);
+  let account = await getAccountById(id);
+  await importAllUserData(id, account["zip_files"]);
 
-  let movies_watched = csvData.getAllMoviesWatched(id);
+  let movies_watched = await csvData.getAllMoviesWatched(id);
   if (!movies_watched) throw "Could not get all movies";
 
   let currentDate = new Date();
-  let currentDateString = currentDate.toISOString().slice(0, 10);
-  
   if (period == "year") {
+    let lastYearDate = new Date();
+    lastYearDate.setFullYear(currentDate.getFullYear() - 1);
+    movies_watched = movies_watched.filter((movie) => {
+      let watchedDate = new Date(movie.dateWatched);
+      return watchedDate >= lastYearDate;
+    });
   } else if (period == "month") {
+    let lastMonthDate = new Date();
+    lastMonthDate.setMonth(currentDate.getMonth() - 1);
+    movies_watched = movies_watched.filter((movie) => {
+      let watchedDate = new Date(movie.dateWatched);
+      return watchedDate >= lastMonthDate;
+    });
+  } else {
   }
 
   let genre_list = [];
@@ -76,16 +91,16 @@ export const calculateStatistics = async (id, period) => {
   let duration_list = [];
 
   for (let movie of movies_watched) {
-    let the_movie = movieData.getMovieById(movie[movieId]);
-    genre_list.push(the_movie[genres]);
-    director_list.push(the_movie[directors]);
-    actor_list.push(the_movie[actors]);
-    global_rating_list.push(the_movie[rating]);
-    duration_list.push(the_movie[minute]);
+    let the_movie = movieData.getMovieById(movie["movieId"]);
+    genre_list.push(the_movie["genres"]);
+    director_list.push(the_movie["directors"]);
+    actor_list.push(the_movie["actors"]);
+    global_rating_list.push(the_movie["rating"]);
+    duration_list.push(the_movie["minute"]);
   }
-  genre_list.flat();
-  director_list.flat();
-  actor_list.flat();
+  genre_list = genre_list.flat();
+  director_list = director_list.flat();
+  actor_list = actor_list.flat();
 
   //Top 3 genres: top_3_genres
   let genre_count = {};
@@ -213,7 +228,7 @@ export const calculateStatistics = async (id, period) => {
   //Average User Movie Rating: average_movie_rating
   let rating_list = [];
   for (let movie of movies_watched) {
-    rating_list.push(csvData.getRating(movie[movieId], id));
+    rating_list.push(await csvData.getRating(movie["movieId"], id));
   }
 
   let rating_count = 0;
@@ -232,7 +247,7 @@ export const calculateStatistics = async (id, period) => {
     global_total += global_movie_rating;
     global_rating_count++;
   }
-  let global_average_movie_rating = gloval_total / global_rating_count;
+  let global_average_movie_rating = global_total / global_rating_count;
 
   let rating_difference = average_movie_rating - global_average_movie_rating;
 
@@ -251,7 +266,7 @@ export const calculateStatistics = async (id, period) => {
   let movie_genre_recommendation_list = [];
 
   while (true) {
-    let popular_movie = getMovieByPopularity(popularity_number);
+    let popular_movie = await movieData.getMovieByPopularity(popularity_number);
 
     if (!popular_movie) break;
 
@@ -276,16 +291,16 @@ export const calculateStatistics = async (id, period) => {
 
   //Recommendations based off actor
   popularity_number = 1000000;
-  movie_actor_recommendation_list = [];
+  let movie_actor_recommendation_list = [];
   while (true) {
-    let popular_movie = getMovieByPopularity(popularity_number);
+    let popular_movie = await movieData.getMovieByPopularity(popularity_number);
 
     if (!popular_movie) break;
 
     if (
-      popular_movie.actors.name.includes(actor1) ||
-      popular_movie.actors.name.includes(actor2) ||
-      popular_movie.actors.name.includes(actor3)
+      popular_movie.actors.some((a) => a.name == actor1) ||
+      popular_movie.actors.some((a) => a.name == actor2) ||
+      popular_movie.actors.some((a) => a.name == actor3)
     ) {
       let alreadyWatched = movies_watched.some(
         (movie) => movie["name"] === popular_movie["name"]
@@ -303,9 +318,9 @@ export const calculateStatistics = async (id, period) => {
 
   //Recommendations based off director
   popularity_number = 1000000;
-  movie_director_recommendation_list = [];
+  let movie_director_recommendation_list = [];
   while (true) {
-    let popular_movie = getMovieByPopularity(popularity_number);
+    let popular_movie = await movieData.getMovieByPopularity(popularity_number);
 
     if (!popular_movie) break;
 
@@ -319,10 +334,10 @@ export const calculateStatistics = async (id, period) => {
       );
 
       if (!alreadyWatched) {
-        movie_actor_recommendation_list.push(popular_movie);
+        movie_director_recommendation_list.push(popular_movie);
       }
 
-      if (movie_actor_recommendation_list.length === 3) break;
+      if (movie_director_recommendation_list.length === 3) break;
     }
 
     popularity_number++;
@@ -339,7 +354,7 @@ export const calculateStatistics = async (id, period) => {
     directors: top_3_director,
     actors: top_3_actors,
     rating: average_movie_rating,
-    global_difference: average_distance_from_global,
+    global_difference: rating_difference,
     hours_watched: hours_watching_movies,
     recommendations: movie_recommendations,
   };
@@ -358,7 +373,7 @@ export const importAllUserData = async (userId, zipBuffer) => {
     throw new Error("User not found.");
   }
   // Extract and parse CSV files
-  const extracted = await unZip(zipBuffer);
+  const extracted = await csvData.unZip(zipBuffer);
   const diaryCSV = extracted.diaryCSV;
   const ratingsCSV = extracted.ratingsCSV;
   const reviewsCSV = extracted.reviewsCSV;
@@ -375,13 +390,13 @@ export const importAllUserData = async (userId, zipBuffer) => {
   let ratingRows = [];
   const reviewRows = [];
   if (diaryCSV) {
-    diaryRows = parse(diaryCSV);
+    diaryRows = csvData.parse(diaryCSV);
   }
   if (ratingsCSV) {
-    ratingRows = parse(ratingsCSV);
+    ratingRows = csvData.parse(ratingsCSV);
   }
   if (reviewsCSV) {
-    reviewRows = parse(reviewsCSV);
+    reviewRows = csvData.parse(reviewsCSV);
   }
   // Process diary file the  watch dates
   for (let i = 0; i < diaryRows.length; i++) {
@@ -482,6 +497,8 @@ export const importAllUserData = async (userId, zipBuffer) => {
   return "Import finished";
 };
 
+
+
 export const getAllAccounts = async () => {
   const accountCollection = await accounts();
   let accountList = await accountCollection.find({}).toArray();
@@ -544,108 +561,67 @@ export const deleteAccount = async (id) => {
   return { username: findAccount.username, deleted: true };
 };
 
+export const addFollower = async (userId, followerId) => {
+  let user = await getAccountById(userId);
+  let follower = await getAccountById(followerId);
+
+  updateAccountInformation(
+    user["username"],
+    user["password"],
+    user["age"],
+    user["isAdmin"],
+    user["isPrivate"],
+    user["profile_description"],
+    user["zip_files"],
+    user["followers"].push(follower["id"]),
+    user["following"]
+  );
+
+  updateAccountInformation(
+    follower["username"],
+    follower["password"],
+    follower["age"],
+    follower["isAdmin"],
+    follower["isPrivate"],
+    follower["profile_description"],
+    follower["zip_files"],
+    follower["followers"],
+    following["following"].push(user["id"])
+  );
+};
+
 export const updateAccountInformation = async (
-  id,
-  username, //need to check that it meats criteria
+  username,
   password,
   age,
-  isAdmin, //figure this out
+  isAdmin,
+  isPrivate,
   profile_description,
-  all_movies,
-  recently_watched,
   zip_files,
-  //rating_id,
   followers,
-  following,
-  statistics
+  following
 ) => {
-  //Validation with helpers
-  checkValidID(id, "id");
+  //validate string parameters
   checkValidString(username, "username");
   checkValidString(password, "password");
+
+  //valide age
   checkValidAge(age);
-  checkValidString(profile_description, "profile description");
-  for (let movie in all_movies) {
-    checkValidString(movie, "all movies");
-  }
-  for (let movie in recently_watched) {
-    checkValidString(movie, "recently watched movie");
-  }
-  for (let follower in followers) {
-    checkValidObject(follower, "follower id");
-  }
-  for (let follow in following) {
-    checkValidObject(follow, "following id");
+
+  if (profile_description) {
+    checkValidString(profile_description, "profile description");
   }
 
-  if (typeof statistics != "object") {
-    throw "statistics must be an object";
-  }
-
-  //check for null an array
-  if (statistics == null || Array.isArray(statistics)) {
-    throw "statistics cannot be null or an array";
-  }
-
-  //check that parameters exist
-  if (
-    !("average_distance_from_global" in logistics) ||
-    !("top_genre" in logistics) ||
-    !("top_directors" in logistics) ||
-    !("top_actors" in logistics) ||
-    !("top_studio" in logistics) ||
-    !("most_watched_time_period" in logistics) ||
-    !("most_watched_movie" in logistics) ||
-    !("movie_recommendations" in logistics) ||
-    !("last_time_updated" in logistics)
-  ) {
-    throw "one of the required keys/properties in statistics was not provided";
-  }
-
-  let validStatisticKeys = [
-    "average_distance_from_global",
-    "top_genre",
-    "top_directors",
-    "top_actors",
-    "top_studio",
-    "most_watched_time_period",
-    "most_watched_movie",
-    "movie_recommendations",
-    "last_time_updated",
-  ];
-
-  for (let key in validStatisticKeys) {
-    checkValidObject(key);
-    if (!validKeys.includes(key)) {
-      throw "statisitcs is missing a critical key.";
-    }
-  }
-
-  let newStatistics = {
-    average_distance_from_global: average_distance_from_global,
-    top_genre: top_genre,
-    top_directors: top_directors,
-    top_actors: top_actors,
-    top_studio: top_studio,
-    most_watched_time_period: most_watched_movie,
-    most_watched_movie: most_watched_movie,
-    movie_recommendations: movie_recommendations,
-    last_time_updated: last_time_updated,
-  };
-
-  let userUpdateInfo = {
-    id: id,
+  let newAccount = {
     username: username,
     password: password,
     age: age,
     isAdmin: isAdmin,
+    isPrivate: isPrivate,
     profile_description: profile_description,
-    recently_watched: recently_watched,
     zip_files: zip_files,
-    //ratingId: ratingId,
     followers: followers,
     following: following,
-    statistics: newStatistics,
   };
 
   //Addding the account to the DB and returning the account
@@ -653,7 +629,7 @@ export const updateAccountInformation = async (
 
   const updateInfo = await accountCollection.findOneAndReplace(
     { _id: new ObjectId(id) },
-    userUpdateInfo,
+    newAccount,
     { returnDocument: "after" }
   );
   if (!updateInfo)
