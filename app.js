@@ -43,6 +43,7 @@ app.use((req,res,next) => {
     req.username = req.session.user.username;
 }
 console.log("user logged in currently is " + req.user);
+console.log("Session: " + req.session.user)
 
 next();
 });
@@ -112,7 +113,26 @@ try {
   console.log(e)
 }
 
+try {
+  console.log(await moviesData.getMovieById(1000001))
+} catch (e) {
+  console.log(e)
+}
+
+try {
+  console.log(await moviesData.getMoviesByActor("Margot Robbie"))
+} catch (e) {
+  console.log(e)
+}
+
+
+
+
+//end Database test
+
 console.log("Done");
+
+console.log("Your routes will be running on http://localhost:3000")
 
 await closeConnection()
 
