@@ -1,16 +1,15 @@
+
 import {checkValidString, checkValidId,checkValidNumber} from "../helpers.js";
 import { ObjectId } from "mongodb";
 import { userMovieData } from '../config/mongoCollections.js';//still needs to be added in config. collection 3 according to db prop
 import JSZip from "jszip";
 
 // This takes the raw ZIP file the user uploads and opens it.
-// Inside the ZIP, we expect three files:
-// - diary.csv
-// - ratings.csv
-// - reviews.csv
+// Inside the ZIP, we need the  three files
+// diary.csv, ratings.csv reviews.csv
 // This function pulls each one out and returns the *text* inside them.
-// We don’t parse anything here — we ONLY extract the files.
-// Example return object:
+// We don’t parse anything here  we are extracting the files from the zip.
+// ex return object:
 //     {
 //         diaryCSV:   "...csv text...",
 //         ratingsCSV: "...csv text...",
@@ -42,73 +41,96 @@ export const unZip = async(zipBuffer)=>
     };
 };
 
-// This turns a CSV file (as a big string) into a list of objects.
-// Each object represents one line/row from the CSV.
-// For example, if the CSV has:
+// This turns a CSV file as a big string into a list of objects and so  each object represents one line/row from the CSV.
+// ex the csv has 
 //         Movie,Rating
 //         Inception,5
 //         Dune,4
-//     Then parse() returns:
+// then parse() will return
 //     [
 //         { Movie: "Inception", Rating: "5" },
 //         { Movie: "Dune",      Rating: "4" }
 //     ]
 // This makes it way easier for us to work with the CSV when inserting
-// things into our database.
+// things into our database otherwise its a horrible issue.
 export const parse = (csvText) => {
-    if (!csvText || typeof csvText !== "string") {
+    if (!csvText) 
+        {
         return [];
     }
-
-    // Split into lines
-    const lines = csvText.split(/\r?\n/);
-
-    // Need at least header + 1 row
-    if (lines.length < 2) {
+    
+    const lines = csvText.split("\n");
+    if (lines.length < 2) 
+        {
         return [];
     }
-
-    // Parse headers
-    const headerLine = lines[0];
-    const headerParts = headerLine.split(",");
+    
+    // parse headers
+    const firstLine = lines[0];
     const headers = [];
-
-    for (let i = 0; i < headerParts.length; i++) {
-        headers.push(headerParts[i].trim());
+    let curr = "";
+    let inQuotes = false;
+    
+    for (let i = 0; i < firstLine.length; i++) {
+        const c = firstLine[i];
+        
+        if (c === '"') {
+            inQuotes = !inQuotes;
+        } else if (c === ',' && !inQuotes) {
+            headers.push(curr.trim().replace(/\r/g, "")); // regex from google
+            curr = "";
+        } else {
+            curr += c;
+        }
     }
-
+    headers.push(curr.trim().replace(/\r/g, "")); // regex from google 
+    
     const rows = [];
-
-    // Parse each data row
+    
     for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (line === "") {
+        const line = lines[i];
+        if (!line.trim()) 
+            {
             continue;
         }
+        
+        const vals = [];
+        curr = "";
+        inQuotes = false;
+        
+        for (let j = 0; j < line.length; j++) {
 
-        const parts = line.split(",");
-        const obj = {};
-
-        for (let j = 0; j < headers.length; j++) {
-            let value = "";
-
-            if (parts[j] !== undefined && parts[j] !== null) {
-                value = parts[j].trim();
+            const c = line[j];
+            
+            if (c === '"') 
+                {
+                inQuotes = !inQuotes;
+            } 
+            else if (c === ',' && !inQuotes) 
+                {
+                vals.push(curr.trim().replace(/\r/g, ""));// I got this regex from google 
+                curr = "";
+            } 
+            else 
+                {
+                curr += c;
             }
-
-            obj[headers[j]] = value;
         }
-
-        rows.push(obj);
+        vals.push(curr.trim().replace(/\r/g, "")); // i got this regex from google 
+        
+        const row = {};
+        for (let k = 0; k < headers.length; k++) 
+            {
+            row[headers[k]] = vals[k] || "";
+        }
+        rows.push(row);
     }
-
     return rows;
 };
 
-//  Returns the rating that THIS user gave to THIS movie.
-//Used when:
-// - showing a user their movie list
-// - Lucas needs everyone’s ratings to compute averages
+//  Returns the rating that this specfic user gave to this movie.
+// it is used when showing a user their movie list
+// Also lucas you need everyone’s ratings to compute averages
 export const getRating = async (movieId,userId) => 
     {
     // validate both IDs
@@ -130,8 +152,7 @@ export const getRating = async (movieId,userId) =>
 };
 
 // Returns the date the user originally watched the movie.
-// Example return:
-// "2024-03-14"
+// Ex return "2024-03-14"
 export const getDateWatched = async (movieId, userId)=>
 {
     checkValidId(movieId);
@@ -148,8 +169,7 @@ export const getDateWatched = async (movieId, userId)=>
     return entry.dateWatched;
 };
 
-// Returns how many times the user has rewatched this movie.
-// If we never recorded it, we assume 0.
+// Returns how many times the user has rewatched this movie. If we never recorded it, then we basically we assume 0.
 export const getRewatchCount = async (movieId, userId)=>
 {
     checkValidId(movieId);
@@ -169,8 +189,8 @@ export const getRewatchCount = async (movieId, userId)=>
     }
     return entry.rewatchCount;
 };
-// Returns the text review the user wrote for this movie.
-// If they didn’t write a review, returns an empty string.
+
+// This will returns the text review the user wrote for this movie. And if they didn’t write a review, returns an empty string.
 export const getReviewDescription = async (movieId, userId)=>
 {
     checkValidId(movieId);
@@ -191,22 +211,19 @@ export const getReviewDescription = async (movieId, userId)=>
     return entry.reviewDescription;
 };
 
-// Returns a list of ALL movies this user has in our database.
-
-//     Each entry looks something like:
+// This returns a list of all movies this user has in our database.
+// Each entry/piece looks something like:
 //     {
 //         userId: "abc123",
 //         movieId: "550",
+//         movieName: "Name"
 //         rating: 5,
 //         dateWatched: "2024-01-01",
 //         rewatchCount: 2,
 //         reviewDescription: "Amazing movie!"
 //     }
-
-//     Lucas will loop through this to compute things like:
-//         - average rating
-//         - total movies watched
-//         - watch statistics
+// Lucas you will  will loop through this to compute things like:
+// average rating, the total movies watched and watch statistics
 export const getAllMoviesWatched = async(userId) =>
 {
     checkValidId(userId);
@@ -219,16 +236,15 @@ export const getAllMoviesWatched = async(userId) =>
     }
     return entry;
 };
-// Returns an array of ALL movie records this user has in the database.
-// Each object includes movieId, rating, dateWatched, reviewDescription, etc.
+// More Info Lucas, this returns an array of all movie records this user has in the database.
+// Each object includes movieName,movieId, rating, dateWatched, reviewDescription, etc.
 // Other files (like accounts.js) will loop through this to compute stats
-// such as total movies watched, total rewatches, average rating, etc. In accounts.js lucas can do  this
+// such as total movies watched, total rewatches, average rating, and the rest of stuff. In accounts.js, lucas, you  can do  this
 //const movies = await getAllMoviesWatched(userId);
-//const totalMovies = movies.length;
+//const totalMovies = movies.length; or something like that
 
 
-// Updates the user's rating for this movie.
-// Returns whatever the new rating is.
+// This will update the user's rating for this movie if they change it. This will returns whatever the new rating is.
 export const  setRating = async (movieId, userId, val)=>
 {
     checkValidId(movieId);
@@ -254,8 +270,7 @@ export const  setRating = async (movieId, userId, val)=>
     return entry.value.rating;
 };
 
-//  Updates the date the user watched the movie.
-//  Returns the updated date.
+// This is basically Uudating the date the user watched the movie. This returns the updated date.
 export const setDateWatched = async (movieId, userId, val)=>
 {
     checkValidId(movieId);
@@ -277,9 +292,8 @@ export const setDateWatched = async (movieId, userId, val)=>
     return entry.value.dateWatched;
 };
 
-// Updates how many times the user has rewatched the movie.
-// Used when a user manually edits their movie details.
-//Returns the updated rewatch count.
+// This will update how many times the user has rewatched the movie. THis is used when a user manually edits their movie details.
+//This Returns the updated rewatch count.
 export const setRewatchCount = async (movieId, userId, val)=>
 {
     checkValidId(movieId);
@@ -308,8 +322,7 @@ export const setRewatchCount = async (movieId, userId, val)=>
     return entry.value.rewatchCount;
 };
 
-// Updates the written review the user left for this movie.
-// Returns the updated review text.
+// This will updates the written review the user left for this movie and returns the updated review text.
 export const setReviewDescription = async (movieId, userId, val)=>
 {
     checkValidId(movieId);
