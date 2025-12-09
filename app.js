@@ -1,6 +1,59 @@
 import * as moviesData from "./data/movies.js"
 import {dbConnection, closeConnection} from './config/mongoConnection.js';
 import {movies} from './config/mongoCollections.js'
+import express from 'express';
+const app = express();
+import session from 'express-session';
+import configRoutes from './routes/index.js';
+import multer from 'multer';
+const upload = multer(); 
+
+app.use(express.json());
+
+app.use(
+  session({
+    name: 'Letterboxd_Session',
+    secret: "Cool Site",
+    saveUninitialized: false,
+    resave: false,
+    cookie: { maxAge: 600000 }
+  })
+);
+
+app.use('/secureRoute', (req, res, next) => {
+    if(!req.session.user) 
+      {
+      return res.redirect("/");
+      } 
+      else
+      {
+        next();
+      }
+});
+
+app.use('/login', (req, res, next) => {
+  if(req.session.user)
+  {
+    res.redirect("/");
+  }
+  else
+  {
+  next();
+  }
+});
+
+app.use('/upload', upload.single('zipfile'), (req, res, next) => {
+  next();
+});
+
+configRoutes(app);
+
+app.listen(3000, () => {
+  console.log("We've now got a server!");
+});
+
+//ignore eveything below
+
 
 //connect to database
 const db = await dbConnection()
@@ -69,3 +122,4 @@ try {
 console.log("Done");
 
 await closeConnection()
+
