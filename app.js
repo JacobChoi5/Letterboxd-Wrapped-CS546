@@ -6,7 +6,16 @@ const app = express();
 import session from 'express-session';
 import configRoutes from './routes/index.js';
 import multer from 'multer';
+import exphbs from 'express-handlebars';
 const upload = multer(); 
+
+//this is for the partials to allow for the nested comment logic
+const handlebarsInstance = exphbs.create({
+  partialsDir: ['views/partials/']
+});
+
+app.engine('handlebars', handlebarsInstance.engine);
+app.set('view engine', 'handlebars');
 
 app.use(express.json());
 

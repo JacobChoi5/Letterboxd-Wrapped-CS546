@@ -1,0 +1,12 @@
+<hr>
+<p>{{postedAt}}</p>
+<p>{{username}}: {{text}}</p>
+<p>Likes: {{likes.length}}</p>
+{{#if subcomments}}
+<p>Replies:</p>
+<ul>
+    {{#each subcomments}}
+    <li>{{> comment}}</li>
+    {{/each}}
+</ul>
+{{/if}}

@@ -82,6 +82,20 @@ router.route('/:id').get(async (req, res) => {
     }
 })
 
+router.route('/:id/comment').post(async (req, res) => {
+    try {
+        helpers.checkValidString(req.params.id)
+        req.params.id = req.params.id.trim()
+        helpers.checkValidString(req.params.id)
+    } catch (e) {
+        return res.status(400).render('error', {
+            errorMessage: 'Error in id: ' + e,
+            class: 'invalid-id'
+        });
+    }
+    //your logic here
+})
+
 router.route('/:id/add').post(async (req, res) => {
     try {
         helpers.checkValidString(req.params.id)
@@ -248,7 +262,6 @@ router.route('/moviecreated').post(async (req, res) => {
             class: 'page-fail'
         })
     }
-
 })
 
 export default router
