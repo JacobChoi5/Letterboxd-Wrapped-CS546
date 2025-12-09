@@ -6,11 +6,20 @@ const app = express();
 import session from 'express-session';
 import configRoutes from './routes/index.js';
 import multer from 'multer';
+import exphbs from 'express-handlebars';
 const upload = multer(); 
 import cookieParser from 'cookie-parser';
 //found multer on npm website when I searched up upload stuff middleware https://www.npmjs.com/package/multer 
 
 app.use(cookieParser());
+
+//this is for the partials to allow for the nested comment logic
+const handlebarsInstance = exphbs.create({
+  partialsDir: ['views/partials/']
+});
+
+app.engine('handlebars', handlebarsInstance.engine);
+app.set('view engine', 'handlebars');
 
 app.use(express.json());
 // What i need to do 
