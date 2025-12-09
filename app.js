@@ -43,6 +43,7 @@ app.use((req,res,next) => {
     req.username = req.session.user.username;
 }
 console.log("user logged in currently is " + req.user);
+console.log("Session: " + req.session.user)
 
 next();
 });
@@ -162,9 +163,15 @@ try {
 } catch (e) {
   console.log(e)
 }
+
+
+
+
 //end Database test
 
 console.log("Done");
+
+console.log("Your routes will be running on http://localhost:3000")
 
 await closeConnection()
 
