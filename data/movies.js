@@ -297,6 +297,13 @@ export const getMoviesByName = async (name) => {
   return movieCollection.find({ names: name.trim() }).toArray();
 };
 
+export const getMoviesByPopularity = async (popularity) => {
+  helpers.checkValidString(popularity, "Popularity");
+  const movieCollection = await movies();
+  return movieCollection.findOne({ popularity });
+
+};
+
 //super comment is for when a comment is made under another comment rather than just on the movie
 export const createComment = async (movieId, userId, username, text, superCommentId) => {
   if (!movieId || !ObjectId.isValid(movieId)) 
@@ -320,8 +327,8 @@ export const createComment = async (movieId, userId, username, text, superCommen
     username,
     text,
     postedAt: new Date(),
-    "likes": [],
-    "subcomments": []
+    likes: [],
+    subcomments: []
   }
 
   let movie = await getMovieById(movieId);
@@ -360,9 +367,7 @@ const replyToComment = (comments, id, newComment) => {
   return null;
 }
 
-/* 
-//needs to return whole list of comments a
-const likeComment = (movieId, commentId, userId) => {
+export const toggleLike = async (movieId, commentId, userId) => {
   if (!movieId || !ObjectId.isValid(movieId)) 
   {
     throw "Movie ID must be a valid ObjectId";
@@ -375,18 +380,39 @@ const likeComment = (movieId, commentId, userId) => {
   {
     throw "Comment ID must be a valid ObjectId";
   }
-  
 
+  let movie = await getMovieById(movieId);
+  let comments = movie.comments
 
+  comments = findAndToggle(comments, commentId, userId)
+
+  const movieCollection = await movies();
+  const awaitInfo = await movieCollection.updateOne({_id: movieId}, {$set: {comments: comments}});
+  if (!awaitInfo.acknowledged || awaitInfo.modifiedCount === 0)
+  {
+    throw 'Error: Could not add comment';
+  }
+  return comments
+}
+
+const findAndToggle =  (comments, id, userId) => {
   for (let comment of comments) 
   {
     if (comment._id.toString() === id.toString()) 
     {
-      comment.subcomments.push(newComment)
+      let index = comment.likes.findIndex(u => u.toString() === userId.toString());
+      if (index !== -1)
+      {
+        comment.likes.splice(index, 1)
+      }
+      else
+      {
+      comment.likes.push(userId)
+      }
       return comments
     }
-    let newSubcomments = replyToComment(comment.subcomments, id, newComment)
-    if (newSubcomments)
+    let newSubcomments = findAndToggle(comment.subcomments, id, userId)
+    if (newSubcomments != null)
     {
       comment.subcomments = newSubcomments;
       return comments;
