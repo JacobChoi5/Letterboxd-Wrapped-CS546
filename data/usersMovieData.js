@@ -24,7 +24,10 @@ export const unZip = async(zipBuffer)=>
     // Helper to pull a single file out of the zip
     const getFileText = async (fileName) => {
         const file = zip.file(fileName);
-        if (!file) return null;
+        if (!file) 
+            {
+                return null
+            };
         return await file.async("string");
     };
 
