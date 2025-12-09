@@ -2,6 +2,12 @@
 <p>{{postedAt}}</p>
 <p>{{username}}: {{text}}</p>
 <p>Likes: {{likes.length}}</p>
+<p>Reply:</p>
+    <form action="/movies/{{@root.movie._id}}/comment" method="POST">
+        <input type="text" name="text">    
+        <input type="hidden" name="supercomment" value="{{_id}}">
+        <button type="submit">Add Comment</button>
+    </form>
 {{#if subcomments}}
 <p>Replies:</p>
 <ul>
