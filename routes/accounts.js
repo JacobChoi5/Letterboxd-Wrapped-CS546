@@ -16,6 +16,7 @@ router.route('/').get(async (req, res) => {
 });
 
 router.route('/:id').get(async (req, res) => {
+    //createStatsObject(id)
     let account = {}
     let data = {}
     try {
@@ -38,6 +39,10 @@ router.route('/:id').get(async (req, res) => {
             class: 'page-fail'
         })
     }
+})
+
+router.route('follow').post(async (req, res) => {
+    //TODO
 })
 
 router.route('/createaccount').get(async (req, res) => {
