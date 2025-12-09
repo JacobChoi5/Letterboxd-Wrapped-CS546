@@ -16,11 +16,14 @@ router.route('/').get(async (req, res) => {
 });
 
 router.route('/:id').get(async (req, res) => {
+    let account = {}
+    let data = {}
     try {
         helpers.checkValidId(id)
         id = id.trim()
         helpers.checkValidId(id)
         account = accountData.getAccountById(id)
+        data = accountData.calculateStatistics(id, "alltime")
     } catch (e) {
         return res.status(400).render('error', {
             errorMessage: 'Invalid account id: ' + e,

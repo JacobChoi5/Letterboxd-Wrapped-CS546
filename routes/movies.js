@@ -82,6 +82,20 @@ router.route('/:id').get(async (req, res) => {
     }
 })
 
+router.route('/:id/comment').post(async (req, res) => {
+    try {
+        helpers.checkValidString(req.params.id)
+        req.params.id = req.params.id.trim()
+        helpers.checkValidString(req.params.id)
+    } catch (e) {
+        return res.status(400).render('error', {
+            errorMessage: 'Error in id: ' + e,
+            class: 'invalid-id'
+        });
+    }
+    //your logic here
+})
+
 router.route('/:id/add').post(async (req, res) => {
     try {
         helpers.checkValidString(req.params.id)
@@ -102,23 +116,23 @@ router.route('/:id/add').post(async (req, res) => {
             class: 'movie-not-found'
         });
     }
-    try{
+    try {
         accountData.addMovieById(req.params.id)
-    }catch(e){
+    } catch (e) {
         return res.status(500).render('error', {
             errorMessage: 'Could not add movie to account: ' + e,
             class: 'add-error'
         })
     }
-    try{
-        res.render('success', {Title: movie.name, successMessage: `${movie.name} successfully added to account!`})
-    } catch(e){
+    try {
+        res.render('success', { Title: movie.name, successMessage: `${movie.name} successfully added to account!` })
+    } catch (e) {
         return res.status(500).render('error', {
             errorMessage: 'Failed to render movie creation page: ' + e,
             class: 'page-fail'
         })
     }
-    
+
 })
 
 router.route('/newmovie').get(async (req, res) => {
@@ -248,7 +262,6 @@ router.route('/moviecreated').post(async (req, res) => {
             class: 'page-fail'
         })
     }
-
 })
 
 export default router
