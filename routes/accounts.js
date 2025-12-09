@@ -18,21 +18,27 @@ router.route('/').get(async (req, res) => {
 router.route('/:id').get(async (req, res) => {
     //createStatsObject(id)
     let account = {}
-    let data = {}
+    let statistics = {}
     try {
         helpers.checkValidId(id)
         id = id.trim()
         helpers.checkValidId(id)
+        let range = "alltime"
+        if (req.query.range) {
+            helpers.checkValidString(req.query.range)
+            range = req.query.range.trim()
+            helpers.checkValidString(range)
+        }
         account = accountData.getAccountById(id)
-        data = accountData.calculateStatistics(id, "alltime")
+        statistics = accountData.calculateStatistics(id, range)
     } catch (e) {
         return res.status(400).render('error', {
-            errorMessage: 'Invalid account id: ' + e,
-            class: 'invalid-id'
+            errorMessage: 'Invalid input: ' + e,
+            class: 'invalid-input'
         })
     }
     try {
-        res.render('accountbyid', { Title: account.username })
+        res.render('accountbyid', { Title: account.username, account: account, statistics: statistics })
     } catch (e) {
         return res.status(500).render('error', {
             errorMessage: 'Failed to render account by id page: ' + e,
@@ -41,12 +47,46 @@ router.route('/:id').get(async (req, res) => {
     }
 })
 
-router.route('follow').post(async (req, res) => {
+router.route('/follow').post(async (req, res) => {
     //TODO
+    let id = req.data.id
+    let currentUserId = ""
+    try {
+        helpers.checkValidId(id)
+        id = id.trim()
+        helpers.checkValidId(id)
+        account = accountData.getAccountById(id)
+    } catch (e) {
+        return res.status(400).render('error', {
+            errorMessage: 'Invalid input: ' + e,
+            class: 'invalid-input'
+        })
+    }
+    try {
+        currentUserId = helpers.checkValidId(req.session.user._id)
+        helpers.checkValidId(currentUserId)
+        currentUserId = currentUserId.trim()
+        helpers.checkValidId(currentUserId)
+    } catch (e) {
+        return res.status(401).render('error', {
+            errorMessage: 'Account not logged in: ' + e,
+            class: 'no-login'
+        })
+    }
+    try {
+        accountData.addFollower(id, currentUserId)
+        res.render('success', { Title: "Follow Confirmed", successMessage: `${account.username} followed!` })
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Failed to follow account: ' + e,
+            class: 'page-fail'
+        })
+    }
 })
 
 router.route('/createaccount').get(async (req, res) => {
     try {
+        console.log("in create account")
         res.render('signup', { Title: "Signup" })
     } catch (e) {
         return res.status(500).render('error', {
@@ -118,8 +158,21 @@ router.route('/signupconfirm').get(async (req, res) => {
 })
 
 router.route('/myaccount').get(async (req, res) => {
+    let curuser = {}
+    try{
+        currentUserId = helpers.checkValidId(req.session.user._id)
+        helpers.checkValidId(currentUserId)
+        currentUserId = currentUserId.trim()
+        helpers.checkValidId(currentUserId)
+        curuser = accountData.getAccountById(currentUserId)
+    } catch (e) {
+        return res.status(401).render('error', {
+            errorMessage: 'Invalid credentials: ' + e,
+            class: 'login-fail'
+        })
+    }
     try {
-        res.render('myaccount', { Title: "My Account" })
+        res.render('myaccount', { Title: "My Account", account: curuser })
     } catch (e) {
         return res.status(500).render('error', {
             errorMessage: 'Failed to render account page: ' + e,
