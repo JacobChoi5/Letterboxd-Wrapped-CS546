@@ -4,7 +4,7 @@ import { ObjectId } from "mongodb";
 import { userMovieData } from '../config/mongoCollections.js';//still needs to be added in config. collection 3 according to db prop
 import JSZip from "jszip";
 
-// This takes the raw ZIP file the user uploads and opens it.
+// This take s the raw ZIP file the user uploads and opens it.
 // Inside the ZIP, we need the  three files
 // diary.csv, ratings.csv reviews.csv
 // This function pulls each one out and returns the *text* inside them.
@@ -74,12 +74,17 @@ export const parse = (csvText) => {
     for (let i = 0; i < firstLine.length; i++) {
         const c = firstLine[i];
         
-        if (c === '"') {
+        if (c === '"') 
+            {
             inQuotes = !inQuotes;
-        } else if (c === ',' && !inQuotes) {
+        } 
+        else if (c === ',' && !inQuotes) 
+            {
             headers.push(curr.trim().replace(/\r/g, "")); // regex from google
             curr = "";
-        } else {
+        } 
+        else 
+            {
             curr += c;
         }
     }
@@ -87,7 +92,8 @@ export const parse = (csvText) => {
     
     const rows = [];
     
-    for (let i = 1; i < lines.length; i++) {
+    for (let i = 1; i < lines.length; i++) 
+        {
         const line = lines[i];
         if (!line.trim()) 
             {
@@ -98,10 +104,9 @@ export const parse = (csvText) => {
         curr = "";
         inQuotes = false;
         
-        for (let j = 0; j < line.length; j++) {
-
+        for (let j = 0; j < line.length; j++) 
+            {
             const c = line[j];
-            
             if (c === '"') 
                 {
                 inQuotes = !inQuotes;
