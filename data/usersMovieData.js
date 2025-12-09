@@ -15,7 +15,7 @@ import JSZip from "jszip";
 //         ratingsCSV: "...csv text...",
 //         reviewsCSV: "...csv text..."
 //     }
-// After this step, the caller will pass each CSV into parse().
+// After this step, the caller will pass each CSV into parse() function.
 export const unZip = async(zipBuffer)=>
 {
     
