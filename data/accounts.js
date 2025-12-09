@@ -65,9 +65,9 @@ export const calculateStatistics = async (id, period) => {
   let currentDate = new Date();
   let currentDateString = currentDate.toISOString().slice(0, 10);
   
-  if (period == "year") {
-  } else if (period == "month") {
-  }
+  // if (period == "year") {
+  // } else if (period == "month") {
+  // }
 
   let genre_list = [];
   let director_list = [];
