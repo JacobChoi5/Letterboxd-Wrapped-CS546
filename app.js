@@ -57,3 +57,17 @@ configRoutes(app);
 app.listen(3000, () => {
   console.log("We've now got a server!");
 });
+
+try {
+  const movieCollection = await movies()
+  const count = await movieCollection.countDocuments()
+
+  if (count > 0) {
+    console.log("Database already seeded - skipping seeding.")
+  } else {
+    await moviesData.seedDatabase()
+    console.log("Success!")
+  }
+} catch (e) {
+  console.log(e)
+}
