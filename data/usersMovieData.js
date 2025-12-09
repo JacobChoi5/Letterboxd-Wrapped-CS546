@@ -1,7 +1,7 @@
 
 import {checkValidString, checkValidId,checkValidNumber} from "../helpers.js";
 import { ObjectId } from "mongodb";
-import { userMovieData } from '../config/mongoCollections.js';//still needs to be added in config. collection 3 according to db prop
+import { userMovieData } from '../config/mongoCollections.js';
 import JSZip from "jszip";
 
 // This take s the raw ZIP file the user uploads and opens it.
