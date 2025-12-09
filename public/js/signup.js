@@ -1,8 +1,9 @@
-(function () {
+(function ($) {
     const inputForm = document.getElementById('signupform');
     if (inputForm) {
         inputForm.addEventListener('submit', (event) => {
             event.preventDefault();
+            console.log("in client side code")
             let username = document.getElementById("username").value
             let password = document.getElementById("password").value
             let cpassword = document.getElementById("cpassword").value
@@ -33,7 +34,7 @@
 
             let requestConfig = {
                 method: 'POST',
-                url: '/signup',   // your Express route
+                url: '/signupconfirm',   // your Express route
                 contentType: 'application/json',
                 data: JSON.stringify({
                     username: username,
@@ -45,10 +46,11 @@
 
             $.ajax(requestConfig).then(function (responseMessage) {
                 //PUT RESPONSE HERE OR SMTH
+                console.log(responseMessage)
             })
 
         })
 
     }
 
-})()
+})(jQuery)
