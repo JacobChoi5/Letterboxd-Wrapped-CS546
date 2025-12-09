@@ -3,11 +3,11 @@
     if (inputForm) {
         inputForm.addEventListener('submit', (event) => {
             event.preventDefault();
-            let username = username.value
-            let password = password.value
-            let cpassword = cpassword.value
-            let age = age.value
-            let description = description.value
+            let username = document.getElementById("username").value
+            let password = document.getElementById("password").value
+            let cpassword = document.getElementById("cpassword").value
+            let age = document.getElementById("age").value
+            let description = document.getElementById("description").value
             try {
                 if (!username || typeof username !== "string") throw "not a string"
                 username = username.trim()
@@ -23,7 +23,7 @@
 
                 if (password !== cpassword) throw "passwords don't match smh"
             } catch (e) {
-                const message = typeof e === 'string' ? e : e.message;
+                const message = typeof e === 'string' ? e : e.message
                 //errorTextElement.textContent = e;
                 let p = document.createElement("p")
                 p.textContent = "invalid input"
@@ -31,7 +31,24 @@
                 errorDiv.appendChild(p)
             }
 
+            let requestConfig = {
+                method: 'POST',
+                url: '/signup',   // your Express route
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    username: username,
+                    password: password,
+                    age: age,
+                    description: description
+                })
+            }
+
+            $.ajax(requestConfig).then(function (responseMessage) {
+                //PUT RESPONSE HERE OR SMTH
+            })
+
         })
 
     }
+
 })()
