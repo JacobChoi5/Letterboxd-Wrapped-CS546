@@ -16,7 +16,7 @@
     "cookie-parser": "^1.4.7",
     "csv-parser": "^3.2.0",
     "express": "^5.2.1",
-    "express-handlebars": "^8.0.3",
+    "express-handlebars": "^8.0.4",
     "express-session": "^1.18.2",
     "jszip": "^3.10.1",
     "mongodb": "^7.0.0",

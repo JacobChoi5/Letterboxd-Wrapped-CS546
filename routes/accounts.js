@@ -3,9 +3,11 @@ const router = Router()
 import * as helpers from "../helpers.js"
 import * as movieData from '../data/movies.js'
 import * as usersMovieData from '../data/usersMovieData.js'
-import { requireLogin } from "../app.js"
+import { requireLogin } from "../middleware.js"
 import * as accountData from '../data/accounts.js'
 import bcrypt from 'bcrypt'
+import multer from 'multer';
+const upload = multer(); 
 
 router.route('/').get(async (req, res) => {
     try {
