@@ -106,6 +106,8 @@ router.route('/login').post(async (req, res) => {
 router.route('/signupconfirm').post(async (req, res) => {
     const accountsignupdata = req.body
     let account = {}
+    console.log("in signup confirm")
+    let age = 0
     try {
         helpers.checkValidString(accountsignupdata.username)
         accountsignupdata.username = accountsignupdata.username.trim()
@@ -115,7 +117,13 @@ router.route('/signupconfirm').post(async (req, res) => {
         accountsignupdata.password = accountsignupdata.password.trim()
         helpers.checkValidString(accountsignupdata.password)
 
-        helpers.checkValidNumber(accountsignupdata.age)
+        console.log(accountsignupdata)
+
+        let age = Number(accountsignupdata.age)
+        console.log(accountsignupdata.age)
+        console.log(typeof age)
+        helpers.checkValidAge(age)
+        console.log("after checking age")
 
         let description = ""
 
@@ -128,20 +136,15 @@ router.route('/signupconfirm').post(async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(accountsignupdata.password, salt);
 
-        account = await accountData.createAccount(accountsignupdata.username, hashedPassword, accountsignupdata.age, false, description, [], [], [], [], [], {})
+        account = await accountData.createAccount(accountsignupdata.username, hashedPassword, age, false, description, [], [], [], [], [], {})
+        return res.json({success: true, message: "Signup successful!"})
     } catch (e) {
-        return res.status(400).render('error', {
-            errorMessage: 'Invalid input data',
-            class: 'error'
+        console.log("error: " + e)
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid input data',
+            error: e
         });
-    }
-    try {
-        res.render('success', { Title: "Signup Confirmation", successMessage: `${account.username} has been successfully created!` })
-    } catch (e) {
-        return res.status(500).render('error', {
-            errorMessage: 'Failed to render signupconfirm page: ' + e,
-            class: 'page-fail'
-        })
     }
 })
 
