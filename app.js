@@ -52,6 +52,7 @@ next();
 });
 
 
+app.use(express.static('public'))
 configRoutes(app);
 
 app.listen(3000, () => {
