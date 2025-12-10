@@ -89,9 +89,10 @@ router.route('/login').post(async (req, res) => {
     try {
         username = req.body.username
         password = req.body.password
-        account = await accountData.getAccountByUsername(username)
+        let account = await accountData.getAccountByUsername(username)
         if (await bcrypt.compare(password, account.password)) {
             //my account is account
+            //TODO @ Sutej
         } else {
             throw "invalid credentials"
         }
@@ -277,9 +278,9 @@ router.route('/:id').get(async (req, res) => {
         account = await accountData.getAccountById(id)
         statistics = await accountData.calculateStatistics(id, range)
     } catch (e) {
-        return res.status(400).render('error', {
-            errorMessage: 'Invalid input: ' + e,
-            class: 'invalid-input'
+        return res.status(404).render('error', {
+            errorMessage: 'Page Not Found',
+            class: 'page-fail'
         })
     }
     try {
