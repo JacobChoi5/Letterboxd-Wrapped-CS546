@@ -268,6 +268,51 @@ router.route('/:id/comment').post(async (req, res) => {
     }
 })
 
+router.route('/:id/likecomment').post(async (req, res) => {
+    try {
+        helpers.checkValidString(req.params.id)
+        req.params.id = req.params.id.trim()
+        helpers.checkValidString(req.params.id)
+    } catch (e) {
+        return res.status(400).render('error', {
+            errorMessage: 'Error in id: ' + e,
+            class: 'invalid-id'
+        });
+    }
+    try {
+        helpers.checkValidString(req.body.commentId)
+        req.body.commentId = req.body.commentId.trim()
+        helpers.checkValidString(req.body.commentId)
+    } catch (e) {
+        return res.status(400).render('error', {
+            errorMessage: 'Error in comment id: ' + e,
+            class: 'invalid-commentId'
+        });
+    }
+
+    try {
+        await movieData.toggleLike(req.params.id, req.body.commentId, req.session.user._id)
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Unable To Like Comment: ' + e,
+            class: 'comment-error'
+        });
+    }
+
+    try {
+        let movie = await movieData.getMovieById(req.params.id)
+        res.render('moviebyid', {
+            movie: movie,
+            Title: movie.name
+        })
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Failed to render movie page: ' + e,
+            class: 'page-fail'
+        })
+    }
+})
+
 router.route('/:id/add').post(async (req, res) => {
     try {
         helpers.checkValidString(req.params.id)
