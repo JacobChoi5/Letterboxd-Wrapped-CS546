@@ -368,7 +368,7 @@ export const deleteMovie = async (id) => {
   });
 
   if (!findMovie) {
-    throw "account with that id could not be found";
+    throw "movie with that id could not be found";
   }
 
   const deletionInfo = await accountCollection.deleteOne({
@@ -379,7 +379,7 @@ export const deleteMovie = async (id) => {
     throw "Error in deleting movie";
   }
 
-  return { username: findAccount.username, deleted: true };
+  return { id: id, deleted: true };
 };
 
 export const getMoviesByDirector = async (name) => {
