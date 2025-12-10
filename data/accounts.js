@@ -592,7 +592,7 @@ export const deleteAccount = async (id) => {
   });
 
   if (deletionInfo.deletedCount == 0) {
-    throw "Error in deleting movie";
+    throw "Error in deleting account";
   }
   return { username: findAccount.username, deleted: true };
 };
