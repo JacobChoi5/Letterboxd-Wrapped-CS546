@@ -83,6 +83,7 @@ router.route('/:id').get(async (req, res) => {
 })
 
 router.route('/:id/comment').post(async (req, res) => {
+    console.log('BODY IN COMMENT ROUTE:', req.body);
     try {
         helpers.checkValidString(req.params.id)
         req.params.id = req.params.id.trim()
@@ -93,7 +94,50 @@ router.route('/:id/comment').post(async (req, res) => {
             class: 'invalid-id'
         });
     }
-    //your logic here
+    try {
+        helpers.checkValidString(req.body.text)
+        req.body.text = req.body.text.trim()
+        helpers.checkValidString(req.body.text)
+    } catch (e) {
+        return res.status(400).render('error', {
+            errorMessage: 'Error in comment text: ' + e,
+            class: 'invalid-comment'
+        });
+    }
+    try {
+        if (req.body.supercomment) 
+        {
+            await movieData.createComment(  req.params.id, 
+                                            req.session.user._id,
+                                            req.session.user.username, 
+                                            req.body.text,
+                                            req.body.supercomment)
+        }
+        else   
+        {
+            await movieData.createComment(  req.params.id, 
+                                            req.session.user._id,
+                                            req.session.user.username, 
+                                            req.body.text)
+        }
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Unable To Create Comment: ' + e,
+            class: 'comment-error'
+        });
+    }
+    try {
+        let movie = await movieData.getMovieById(req.params.id)
+        res.render('moviebyid', {
+            movie: movie,
+            Title: movie.name
+        })
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Failed to render movie page: ' + e,
+            class: 'page-fail'
+        })
+    }
 })
 
 router.route('/:id/add').post(async (req, res) => {

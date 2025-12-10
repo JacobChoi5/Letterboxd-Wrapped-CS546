@@ -1,7 +1,7 @@
 
 import {checkValidString, checkValidId,checkValidNumber} from "../helpers.js";
 import { ObjectId } from "mongodb";
-import { userMovieData } from '../config/mongoCollections.js';//still needs to be added in config. collection 3 according to db prop
+import { userMovieData } from '../config/mongoCollections.js';
 import JSZip from "jszip";
 
 // This take s the raw ZIP file the user uploads and opens it.
@@ -24,7 +24,10 @@ export const unZip = async(zipBuffer)=>
     // Helper to pull a single file out of the zip
     const getFileText = async (fileName) => {
         const file = zip.file(fileName);
-        if (!file) return null;
+        if (!file) 
+            {
+                return null
+            };
         return await file.async("string");
     };
 

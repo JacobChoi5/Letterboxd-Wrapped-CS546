@@ -1,15 +1,13 @@
-(function () {
-    const followForm = document.getElementById('followForm')
-    const rangeForm = document.getElementById('rangeForm')
-    if (followForm) {
-        followForm.addEventListener('follow', (event) => {
-            event.preventDefault()
+(function ($) {
+    let rangeForm = $('#rangeForm');
+    let followForm = $('#followForm');
 
-            const userId = followForm.dataset.userId
-
-            let requestConfig = {
+    followForm.submit(function (event) {
+        event.preventDefault()
+        let userId = followForm.dataset.userId
+        let requestConfig = {
                 method: 'POST',
-                url: '/signup',   // your Express route
+                url: '/follow',
                 contentType: 'application/json',
                 data: JSON.stringify({
                     id: userId
@@ -17,20 +15,16 @@
             }
             $.ajax(requestConfig).then(function (responseMessage) {
                 //PUT RESPONSE HERE OR SMTH
+                console.log(responseMessage)
             })
+    })
 
-        })
-
-    }
-
-    if (rangeForm) {
-        rangeForm.addEventListener('submit', (event) => {
-            event.preventDefault()
+    rangeForm.submit(function (event) {
+        event.preventDefault()
             const selected = document.querySelector("input[name='range']:checked").value
 
-            
+    })
 
-        })
-    }
 
-})()
+
+})(window.jQuery)

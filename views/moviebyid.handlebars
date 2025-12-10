@@ -1,4 +1,5 @@
 <main>
+    <img src="{{movie.posterUrl}}">
     <p>Release year: {{movie.date}}</p>
     <p>Tagline: {{movie.tagline}}</p>
     <p>Description: {{movie.description}}</p>
@@ -30,6 +31,12 @@
     <p>{{this}}</p>
     {{/each}}
 
+    <p>Comment:</p>
+    <form action="/movies/{{movie._id}}/comment" method="POST">
+        <input type="text" name="text">
+        <button type="submit">Add Comment</button>
+    </form>
+
     <p>Comments:</p>
     {{#each movie.comments}}
     {{> comment}}
@@ -39,5 +46,4 @@
         <button type="submit">Add Movie</button>
     </form>
 
-    <img src="{{movie.posterUrl}}">
 </main>
