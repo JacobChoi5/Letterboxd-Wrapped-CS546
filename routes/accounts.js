@@ -3,9 +3,11 @@ const router = Router()
 import * as helpers from "../helpers.js"
 import * as movieData from '../data/movies.js'
 import * as usersMovieData from '../data/usersMovieData.js'
-import { requireLogin } from "../app.js"
+import { requireLogin } from "../middleware.js"
 import * as accountData from '../data/accounts.js'
 import bcrypt from 'bcrypt'
+import multer from 'multer';
+const upload = multer(); 
 
 router.route('/').get(async (req, res) => {
     try {
@@ -181,36 +183,34 @@ router.route('/uploaddata').get(async (req, res) => {
     }
 })
 
-
-// router.route('/uploaddata').post(requireLogin,
-//   upload.single('zipfile'),async (req, res) => { // got this line from npm website 
-//     if (!req.file) 
-//         {
-//         return res.status(400).render("error", 
-//             {
-//             errorMessage: "No ZIP file uploaded",
-//             class: "page-fail"
-//         });
-//     }
-//     try 
-//     {
-//         await accountData.importAllUserData(req.userId, req.file.buffer);
-//         return res.render("success", 
-//             {
-//             Title: "Data Upload",
-//             successMessage: "Data has been successfully uploaded!"
-//             });
-//     } 
-//     catch (e) 
-//     {
-//         return res.status(500).render("error", 
-//             {
-//             errorMessage: "Upload failed: " + e,
-//             class: "page-fail"
-//         });
-//     }
-// });
-
+router.route('/uploaddata').post(requireLogin,
+  upload.single('file'),async (req, res) => { // got this line from npm website 
+    if (!req.file) 
+        {
+        return res.status(400).render("error", 
+            {
+            errorMessage: "No ZIP file uploaded",
+            class: "page-fail"
+        });
+    }
+    try 
+    {
+        await accountData.importAllUserData(req.userId, req.file.buffer);
+        return res.render("success", 
+            {
+            Title: "Data Upload",
+            successMessage: "Data has been successfully uploaded!"
+            });
+    } 
+    catch (e) 
+    {
+        return res.status(500).render("error", 
+            {
+            errorMessage: "Upload failed: " + e,
+            class: "page-fail"
+        });
+    }
+});
 
 
 router.route('/addmovie').get(async (req, res) => {
