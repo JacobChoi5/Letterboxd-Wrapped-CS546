@@ -7,7 +7,8 @@ import { requireLogin } from "../middleware.js"
 import * as accountData from '../data/accounts.js'
 import bcrypt from 'bcrypt'
 import multer from 'multer';
-const upload = multer(); 
+const upload = multer();
+
 
 router.route('/').get(async (req, res) => {
     try {
@@ -19,8 +20,6 @@ router.route('/').get(async (req, res) => {
         })
     }
 });
-
-
 
 router.route('/follow').post(async (req, res) => {
     //TODO
