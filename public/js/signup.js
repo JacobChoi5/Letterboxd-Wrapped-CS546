@@ -2,7 +2,7 @@
     const inputForm = document.getElementById('signupform');
     if (inputForm) {
         inputForm.addEventListener('submit', (event) => {
-            event.preventDefault();
+            event.preventDefault()
             console.log("in client side code")
             let username = document.getElementById("username").value
             let password = document.getElementById("password").value
@@ -23,13 +23,17 @@
                 if (cpassword === "") throw "empty string"
 
                 if (password !== cpassword) throw "passwords don't match smh"
+                
+                if (!age) throw "missing age"
             } catch (e) {
+                event.preventDefault()
                 const message = typeof e === 'string' ? e : e.message
                 //errorTextElement.textContent = e;
                 let p = document.createElement("p")
                 p.textContent = "invalid input"
                 const errorDiv = document.getElementById("error")
                 errorDiv.appendChild(p)
+                return
             }
 
             let requestConfig = {
@@ -45,9 +49,20 @@
             }
 
             $.ajax(requestConfig).then(function (responseMessage) {
-                //PUT RESPONSE HERE OR SMTH
                 console.log(responseMessage)
+                if(responseMessage.success){
+                    inputForm.replaceWith(`${responseMessage.message}`)
+                }else{
+                    console.log(responseMessage.message)
+                    //update error div with error message
+                    let p = document.createElement("p")
+                    p.textContent = `Error: ${responseMessage.message}`
+                    const errorDiv = document.getElementById("error")
+                    errorDiv.appendChild(p)
+                }
+                
             })
+
 
         })
 

@@ -93,5 +93,3 @@ console.log("Done");
 
 console.log("Your routes will be running on http://localhost:3000")
 
-await closeConnection()
-
