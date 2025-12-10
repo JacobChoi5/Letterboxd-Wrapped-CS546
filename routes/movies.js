@@ -83,6 +83,7 @@ router.route('/:id').get(async (req, res) => {
 })
 
 router.route('/:id/comment').post(async (req, res) => {
+    console.log('BODY IN COMMENT ROUTE:', req.body);
     try {
         helpers.checkValidString(req.params.id)
         req.params.id = req.params.id.trim()
