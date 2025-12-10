@@ -92,6 +92,10 @@ router.route('/login').post(async (req, res) => {
         if (await bcrypt.compare(password, account.password)) {
             //my account is account
             //TODO @ Sutej
+            req.session.user = {
+                _id: user.id,
+                username: user.username
+            }
         } else {
             throw "invalid credentials"
         }
@@ -128,15 +132,18 @@ router.route('/signupconfirm').post(async (req, res) => {
         let description = ""
 
         if (accountsignupdata.description) {
+            console.log("look at description")
             helpers.checkValidString(accountsignupdata.description)
             description = accountsignupdata.description.trim()
             helpers.checkValidString(description)
+        } else{
+            description = ""
         }
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(accountsignupdata.password, salt);
 
-        account = await accountData.createAccount(accountsignupdata.username, hashedPassword, age, false, description, [], [], [], [], [], {})
+        account = await accountData.createAccount(accountsignupdata.username, hashedPassword, age, false, false, description, [], [], [])
         return res.json({success: true, message: "Signup successful!"})
     } catch (e) {
         console.log("error: " + e)
