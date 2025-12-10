@@ -71,3 +71,8 @@ try {
 } catch (e) {
   console.log(e)
 }
+
+console.log("Done");
+
+console.log("Your routes will be running on http://localhost:3000")
+
