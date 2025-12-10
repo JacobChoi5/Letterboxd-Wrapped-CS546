@@ -24,18 +24,32 @@ export const createAccount = async (
   //valide age
   checkValidAge(age);
 
+  isAdmin = false;
+  isPrivate = false;
+
+  if (!profile_description) {
+    profile_description = "";
+  } else {
+    checkValidString(profile_description);
+  }
+
+  if (!zip_files) {
+    zip_files = [];
+  }
+
+  followers = [];
+  following = [];
+
   let newAccount = {
     username: username,
     password: password,
     age: age,
-    isAdmin: false,
-    isPrivate: false,
-    profile_description: "",
-    all_movies: [],
-    recently_watched: [],
-    zip_files: [],
-    followers: [],
-    following: [],
+    isAdmin: isAdmin,
+    isPrivate: isPrivate,
+    profile_description: profile_description,
+    zip_files: zip_files,
+    followers: followers,
+    following: following,
   };
 
   const accountCollection = await accounts();
@@ -67,6 +81,7 @@ export const calculateStatistics = async (id, period) => {
   if (!movies_watched) throw "Could not get all movies";
 
   let currentDate = new Date();
+
   if (period == "year") {
     let lastYearDate = new Date();
     lastYearDate.setFullYear(currentDate.getFullYear() - 1);
@@ -91,13 +106,27 @@ export const calculateStatistics = async (id, period) => {
   let duration_list = [];
 
   for (let movie of movies_watched) {
-    let the_movie = movieData.getMovieById(movie["movieId"]);
-    genre_list.push(the_movie["genres"]);
-    director_list.push(the_movie["directors"]);
+    let the_movie = await movieData.getMovieById(movie["movieId"]);
+
+    if (the_movie["genres"] !== "Unknown Genres") {
+      genre_list.push(the_movie["genres"]);
+    }
+
+    if (the_movie["directors"] !== "Unknown Directors") {
+      director_list.push(the_movie["directors"]);
+    }
+
     actor_list.push(the_movie["actors"]);
-    global_rating_list.push(the_movie["rating"]);
-    duration_list.push(the_movie["minute"]);
+
+    if (!Number.isNaN(the_movie["rating"])) {
+      global_rating_list.push(the_movie["rating"]);
+    }
+
+    if (!Number.isNaN(the_movie["minute"])) {
+      duration_list.push(the_movie["minute"]);
+    }
   }
+
   genre_list = genre_list.flat();
   director_list = director_list.flat();
   actor_list = actor_list.flat();
@@ -238,7 +267,10 @@ export const calculateStatistics = async (id, period) => {
     rating_count++;
   }
 
-  let average_movie_rating = total / rating_count;
+  let average_movie_rating = 0;
+  if (rating_count !== 0) {
+    average_movie_rating = total / rating_count;
+  }
 
   //Average Different between user's rating and global movie averages: rating_difference
   let global_rating_count = 0;
@@ -249,7 +281,12 @@ export const calculateStatistics = async (id, period) => {
   }
   let global_average_movie_rating = global_total / global_rating_count;
 
-  let rating_difference = average_movie_rating - global_average_movie_rating;
+  let rating_difference = 0;
+  if (average_movie_rating == 0) {
+    rating_difference = "You have not made any reviews.";
+  } else {
+    rating_difference = average_movie_rating - global_average_movie_rating;
+  }
 
   //Hours spent watching movies: hours_watching_movies
   let duration_count = 0;
@@ -276,7 +313,7 @@ export const calculateStatistics = async (id, period) => {
       popular_movie.genres.includes(genre3)
     ) {
       let alreadyWatched = movies_watched.some(
-        (movie) => movie["name"] === popular_movie["name"]
+        (movie) => movie["movieName"] === popular_movie["name"]
       );
 
       if (!alreadyWatched) {
@@ -285,7 +322,6 @@ export const calculateStatistics = async (id, period) => {
 
       if (movie_genre_recommendation_list.length === 3) break;
     }
-
     popularity_number++;
   }
 
@@ -325,9 +361,9 @@ export const calculateStatistics = async (id, period) => {
     if (!popular_movie) break;
 
     if (
-      popular_movie.director.includes(director1) ||
-      popular_movie.director.includes(director2) ||
-      popular_movie.director.includes(director3)
+      popular_movie.directors.includes(director1) ||
+      popular_movie.directors.includes(director2) ||
+      popular_movie.directors.includes(director3)
     ) {
       let alreadyWatched = movies_watched.some(
         (movie) => movie["name"] === popular_movie["name"]
@@ -497,12 +533,10 @@ export const importAllUserData = async (userId, zipBuffer) => {
   return "Import finished";
 };
 
-
-
 export const getAllAccounts = async () => {
   const accountCollection = await accounts();
   let accountList = await accountCollection.find({}).toArray();
-  if (!acccountList) throw "Could not get all accounts";
+  if (!accountList) throw "Could not get all accounts";
   accountList = accountList.map((element) => {
     element._id = element._id.toString();
     return element;
@@ -511,7 +545,6 @@ export const getAllAccounts = async () => {
 };
 
 export const getAccountById = async (id) => {
-  let x = new ObjectId();
   checkValidId(id, "id");
   const accountCollection = await accounts();
   const the_account = await accountCollection.findOne({
@@ -534,13 +567,13 @@ export const getAccountByUsername = async (username) => {
   let account_list = [];
 
   for (let i = 0; i < account_results.length; i++) {
-    let account = results[i];
+    let account = account_results[i];
     account_list.push({
       _id: account._id.toString(),
       username: account.username,
     });
   }
-  return account;
+  return account_list;
 };
 
 export const deleteAccount = async (id) => {
@@ -550,14 +583,17 @@ export const deleteAccount = async (id) => {
     _id: new ObjectId(id),
   });
 
-  if (!findAcccount) {
+  if (!findAccount) {
     throw "account with that id could not be found";
   }
 
   const deletionInfo = await accountCollection.deleteOne({
     _id: new ObjectId(id),
   });
-  //check to make sure autoformattor isn't fucking this up.
+
+  if (deletionInfo.deletedCount == 0) {
+    throw "Error in deleting movie";
+  }
   return { username: findAccount.username, deleted: true };
 };
 
@@ -565,7 +601,14 @@ export const addFollower = async (userId, followerId) => {
   let user = await getAccountById(userId);
   let follower = await getAccountById(followerId);
 
-  updateAccountInformation(
+  if (!user["followers"].includes(followerId)) {
+    user["followers"].push(follower["_id"].toString());
+  }
+  if (!follower["following"].includes(userId)) {
+    follower["following"].push(user["_id"].toString());
+  }
+  await updateAccountInformation(
+    user["_id"].toString(),
     user["username"],
     user["password"],
     user["age"],
@@ -573,11 +616,12 @@ export const addFollower = async (userId, followerId) => {
     user["isPrivate"],
     user["profile_description"],
     user["zip_files"],
-    user["followers"].push(follower["id"]),
+    user["followers"],
     user["following"]
   );
 
-  updateAccountInformation(
+  await updateAccountInformation(
+    follower["_id"].toString(),
     follower["username"],
     follower["password"],
     follower["age"],
@@ -586,11 +630,12 @@ export const addFollower = async (userId, followerId) => {
     follower["profile_description"],
     follower["zip_files"],
     follower["followers"],
-    following["following"].push(user["id"])
+    follower["following"]
   );
 };
 
 export const updateAccountInformation = async (
+  id,
   username,
   password,
   age,
@@ -613,6 +658,7 @@ export const updateAccountInformation = async (
   }
 
   let newAccount = {
+    _id: new ObjectId(id),
     username: username,
     password: password,
     age: age,

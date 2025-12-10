@@ -76,12 +76,8 @@ export const checkValidIdNotString = (val) => {
 };
 
 export const checkValidAge = (val) => {
-  number = Number(val);
+  let number = Number(val);
   checkValidNumber(number, "age");
-  if (!isInteger(number)) {
-    throw "Error: age must be a valid integer";
-  }
-
   if (number < 13) {
     throw "Error: you must be 13 years or older";
   }
