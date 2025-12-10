@@ -350,7 +350,7 @@ export const createComment = async (movieId, userId, username, text, superCommen
   }
   const movieCollection = await movies();
 
-  const awaitInfo = await movieCollection.updateOne({_id: movieId}, {$set: {comments: comments}});
+  const awaitInfo = await movieCollection.updateOne({ _id: new ObjectId(movieId) }, {$set: {comments: comments}});
   if (!awaitInfo.acknowledged || awaitInfo.modifiedCount === 0)
   {
     throw 'Error: Could not add comment';
