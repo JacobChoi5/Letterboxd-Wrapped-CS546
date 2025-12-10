@@ -241,12 +241,21 @@ export const createNewMovie = async (
 }
 
 export const getMovieById = async (id) => {
+  if (!id)
+  {
+    throw "Id must be supplied"
+  }
+  if (typeof id !== "string") 
+  {
+    id = id.toString();
+  }
+  id = id.trim();
   if (!ObjectId.isValid(id)) 
   {
-    throw "Movie ID must be a positive integer";
+    throw "Movie ID must be a valid Object ID";
   }
   const movieCollection = await movies();
-  const movie = await movieCollection.findOne({ _id: id });
+  const movie = await movieCollection.findOne({ _id: new ObjectId(id) });
   if (!movie) 
   {
     throw "No movie with that id";
@@ -341,7 +350,7 @@ export const createComment = async (movieId, userId, username, text, superCommen
   }
   const movieCollection = await movies();
 
-  const awaitInfo = await movieCollection.updateOne({_id: movieId}, {$set: {comments: comments}});
+  const awaitInfo = await movieCollection.updateOne({ _id: new ObjectId(movieId) }, {$set: {comments: comments}});
   if (!awaitInfo.acknowledged || awaitInfo.modifiedCount === 0)
   {
     throw 'Error: Could not add comment';
