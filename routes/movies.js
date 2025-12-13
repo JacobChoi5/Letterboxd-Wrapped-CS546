@@ -2,6 +2,7 @@ import { Router } from 'express'
 const router = Router()
 import * as helpers from "../helpers.js"
 import * as movieData from '../data/movies.js'
+import { requireLogin } from "../middleware.js"
 import * as accountData from '../data/accounts.js'
 import xss from 'xss'
 
@@ -388,6 +389,43 @@ router.route('/:id/add').post(async (req, res) => {
         })
     }
 
+})
+
+router.route('/:id/admin').get(requireLogin, async (req, res) => {
+    try {
+        let currentUserId = req.session.user._id
+        helpers.checkValidId(currentUserId)
+        currentUserId = currentUserId.trim()
+        helpers.checkValidId(currentUserId)
+        curuser = await accountData.getAccountById(currentUserId)
+        if (!curuser.isAdmin) throw "not authorized"
+    } catch (e) {
+        return res.status(403).render('error', {
+            errorMessage: 'Not Admin! ' + e,
+            class: 'not-authorized'
+        });
+    }
+    let movie = {}
+    try {
+        movie = await movieData.getMovieById(req.params.id)
+    } catch (e) {
+        return res.status(404).render('error', {
+            errorMessage: 'Movie Not Found: ' + e,
+            class: 'movie-not-found'
+        });
+    }
+    movie.actors = movie.actors.slice(0, 5)
+    try {
+        res.render('moviebyidadmin', {
+            movie: movie,
+            Title: movie.name
+        })
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Failed to render movie page: ' + e,
+            class: 'page-fail'
+        })
+    }
 })
 
 export default router
