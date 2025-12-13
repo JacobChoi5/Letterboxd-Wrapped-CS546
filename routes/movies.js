@@ -3,6 +3,7 @@ const router = Router()
 import * as helpers from "../helpers.js"
 import * as movieData from '../data/movies.js'
 import * as accountData from '../data/accounts.js'
+import xss from 'xss'
 
 router.route('/lookup').get(async (req, res) => {
     try {
@@ -15,13 +16,14 @@ router.route('/lookup').get(async (req, res) => {
     }
 })
 
-router.route('/lookupresults').get(async (req, res) => {
+router.route('/lookupresults').post(async (req, res) => {
     let name = req.body.name
     let movies = []
     //results of movielookup
+    console.log(req.body.name)
     try {
         helpers.checkValidString(name)
-        name = name.trim()
+        name = xss(name.trim())
         helpers.checkValidString(name)
     } catch (e) {
         return res.status(400).render('error', {
@@ -30,7 +32,8 @@ router.route('/lookupresults').get(async (req, res) => {
         });
     }
     try {
-        movies = movieData.getMoviesByName(name)
+        movies = await movieData.getMoviesByName(name)
+        console.log(movies)
     } catch (e) {
         return res.status(404).render('error', {
             errorMessage: 'Movie Not Found: ' + e,
@@ -76,7 +79,7 @@ router.route('/moviecreated').post(async (req, res) => {
 
     try {
         helpers.checkValidString(data.name)
-        name = data.name.trim()
+        name = xss(data.name.trim())
         helpers.checkValidString(name)
 
         helpers.checkValidNumber(data.date)
@@ -84,13 +87,13 @@ router.route('/moviecreated').post(async (req, res) => {
 
         if (data.tagline) {
             helpers.checkValidString(data.tagline)
-            tagline = data.tagline.trim()
+            tagline = xss(data.tagline.trim())
             helpers.checkValidString(tagline)
         }
 
         if (data.description) {
             helpers.checkValidString(data.description)
-            description = data.description.trim()
+            description = xss(data.description.trim())
             helpers.checkValidString(description)
         }
 
@@ -102,7 +105,7 @@ router.route('/moviecreated').post(async (req, res) => {
 
         if (data.posterurl) {
             helpers.checkValidString(data.posterurl)
-            posterurl = data.posterurl.trim()
+            posterurl = xss(data.posterurl.trim())
             helpers.checkValidString(posterurl)
         }
 
@@ -110,7 +113,7 @@ router.route('/moviecreated').post(async (req, res) => {
             helpers.checkValidString(data.directors)
             directors = data.directors.split(",").map(x => {
                 helpers.checkValidString(x)
-                x = x.trim()
+                x = xss(x.trim())
                 helpers.checkValidString(x)
                 return x
             })
@@ -120,7 +123,7 @@ router.route('/moviecreated').post(async (req, res) => {
             helpers.checkValidString(data.genres)
             genres = data.genres.split(",").map(x => {
                 helpers.checkValidString(x)
-                x = x.trim()
+                x = xss(x.trim())
                 helpers.checkValidString(x)
                 return x
             })
@@ -130,7 +133,7 @@ router.route('/moviecreated').post(async (req, res) => {
             helpers.checkValidString(data.themes)
             themes = data.themes.split(",").map(x => {
                 helpers.checkValidString(x)
-                x = x.trim()
+                x = xss(x.trim())
                 helpers.checkValidString(x)
                 return x
             })
@@ -140,7 +143,7 @@ router.route('/moviecreated').post(async (req, res) => {
             helpers.checkValidString(data.studios)
             studios = data.studios.split(",").map(x => {
                 helpers.checkValidString(x)
-                x = x.trim()
+                x = xss(x.trim())
                 helpers.checkValidString(x)
                 return x
             })
@@ -150,7 +153,7 @@ router.route('/moviecreated').post(async (req, res) => {
             helpers.checkValidString(data.actors)
             actors = data.actors.split(",").map(x => {
                 helpers.checkValidString(x)
-                x = x.trim()
+                x = xss(x.trim())
                 helpers.checkValidString(x)
                 return x
             })
@@ -181,7 +184,7 @@ router.route('/moviecreated').post(async (req, res) => {
 router.route('/:id').get(async (req, res) => {
     try {
         helpers.checkValidString(req.params.id)
-        req.params.id = req.params.id.trim()
+        req.params.id = xss(req.params.id.trim())
         helpers.checkValidString(req.params.id)
     } catch (e) {
         return res.status(400).render('error', {
@@ -214,7 +217,7 @@ router.route('/:id').get(async (req, res) => {
 router.route('/:id/comment').post(async (req, res) => {
     try {
         helpers.checkValidString(req.params.id)
-        req.params.id = req.params.id.trim()
+        req.params.id = xss(req.params.id.trim())
         helpers.checkValidString(req.params.id)
     } catch (e) {
         return res.status(400).render('error', {
@@ -224,7 +227,7 @@ router.route('/:id/comment').post(async (req, res) => {
     }
     try {
         helpers.checkValidString(req.body.text)
-        req.body.text = req.body.text.trim()
+        req.body.text = xss(req.body.text.trim())
         helpers.checkValidString(req.body.text)
     } catch (e) {
         return res.status(400).render('error', {
@@ -316,7 +319,7 @@ router.route('/:id/likecomment').post(async (req, res) => {
 router.route('/:id/add').post(async (req, res) => {
     try {
         helpers.checkValidString(req.params.id)
-        req.params.id = req.params.id.trim()
+        req.params.id = xss(req.params.id.trim())
         helpers.checkValidString(req.params.id)
     } catch (e) {
         return res.status(400).render('error', {

@@ -7,8 +7,8 @@ import { requireLogin } from "../middleware.js"
 import * as accountData from '../data/accounts.js'
 import bcrypt from 'bcrypt'
 import multer from 'multer';
-const upload = multer();
-
+import xss from 'xss'
+const upload = multer(); 
 
 router.route('/').get(async (req, res) => {
     try {
@@ -91,10 +91,10 @@ router.route('/login').post(async (req, res) => {
         let account = await accountData.getAccountByUsername(username)
         if (await bcrypt.compare(password, account.password)) {
             //my account is account
-            //TODO @ Sutej
+            //TODO @ Sutej store inside the session as I wasnt doing that befoire. 
             req.session.user = {
-                _id: user.id,
-                username: user.username
+                _id: account._id.toString(),
+                username: account.username
             }
         } else {
             throw "invalid credentials"
@@ -114,11 +114,11 @@ router.route('/signupconfirm').post(async (req, res) => {
     let age = 0
     try {
         helpers.checkValidString(accountsignupdata.username)
-        accountsignupdata.username = accountsignupdata.username.trim()
+        accountsignupdata.username = xss(accountsignupdata.username.trim())
         helpers.checkValidString(accountsignupdata.username)
 
         helpers.checkValidString(accountsignupdata.password)
-        accountsignupdata.password = accountsignupdata.password.trim()
+        accountsignupdata.password = xss(accountsignupdata.password.trim())
         helpers.checkValidString(accountsignupdata.password)
 
         console.log(accountsignupdata)
@@ -134,7 +134,7 @@ router.route('/signupconfirm').post(async (req, res) => {
         if (accountsignupdata.description) {
             console.log("look at description")
             helpers.checkValidString(accountsignupdata.description)
-            description = accountsignupdata.description.trim()
+            description = xss(accountsignupdata.description.trim())
             helpers.checkValidString(description)
         } else{
             description = ""
@@ -155,7 +155,7 @@ router.route('/signupconfirm').post(async (req, res) => {
     }
 })
 
-router.route('/myaccount').get(requireLogin, async (req, res) => {
+router.route('/myaccount').get( async (req, res) => {
     let curuser = {}
     try{
         currentUserId = helpers.checkValidId(req.session.user._id)
@@ -170,7 +170,18 @@ router.route('/myaccount').get(requireLogin, async (req, res) => {
         })
     }
     try {
+        req.session.user = {
+        _id: account._id.toString(),
+        username: account.username
+        };
+        if(req.session.user)
+        {
         res.render('myaccount', { Title: "My Account", account: curuser })
+        }
+        else
+        {
+            res.render('signupconfirm');
+        }
     } catch (e) {
         return res.status(500).render('error', {
             errorMessage: 'Failed to render account page: ' + e,
@@ -246,7 +257,7 @@ router.route('/accountlookupresults').post(async (req, res) => {
     const accountlookupdata = req.body
     try {
         helpers.checkValidString(accountlookupdata.accountName)
-        accountlookupdata.accountName = accountlookupdata.accountName.trim()
+        accountlookupdata.accountName = xss(accountlookupdata.accountName.trim())
         helpers.checkValidString(accountlookupdata.accountName)
     } catch (e) {
         return res.status(400).render('error', {
@@ -278,7 +289,7 @@ router.route('/:id').get(async (req, res) => {
         let range = "alltime"
         if (req.query.range) {
             helpers.checkValidString(req.query.range)
-            range = req.query.range.trim()
+            range = xss(req.query.range.trim())
             helpers.checkValidString(range)
         }
         account = await accountData.getAccountById(id)
