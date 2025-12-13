@@ -514,11 +514,11 @@ export const toggleLike = async (movieId, commentId, userId) => {
 
   const movieCollection = await movies();
   const awaitInfo = await movieCollection.updateOne(
-    { _id: movieId },
+    { _id: new ObjectId(movieId) },
     { $set: { comments: comments } }
   );
   if (!awaitInfo.acknowledged || awaitInfo.modifiedCount === 0) {
-    throw "Error: Could not add comment";
+    throw "Error: Could not like comment";
   }
   return comments;
 };
