@@ -590,7 +590,10 @@ export const deleteAccount = async (id) => {
   const deletionInfo = await accountCollection.deleteOne({
     _id: new ObjectId(id),
   });
-  //check to make sure autoformattor isn't fucking this up.
+
+  if (deletionInfo.deletedCount == 0) {
+    throw "Error in deleting account";
+  }
   return { username: findAccount.username, deleted: true };
 };
 

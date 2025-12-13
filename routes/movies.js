@@ -49,136 +49,6 @@ router.route('/lookupresults').get(async (req, res) => {
 
 })
 
-router.route('/:id').get(async (req, res) => {
-    try {
-        helpers.checkValidString(req.params.id)
-        req.params.id = req.params.id.trim()
-        helpers.checkValidString(req.params.id)
-    } catch (e) {
-        return res.status(400).render('error', {
-            errorMessage: 'Error in id: ' + e,
-            class: 'invalid-id'
-        });
-    }
-    let movie = {}
-    try {
-        movie = await movieData.getMovieById(req.params.id)
-    } catch (e) {
-        return res.status(404).render('error', {
-            errorMessage: 'Movie Not Found: ' + e,
-            class: 'movie-not-found'
-        });
-    }
-    try {
-        res.render('moviebyid', {
-            movie: movie,
-            Title: movie.name
-        })
-    } catch (e) {
-        return res.status(500).render('error', {
-            errorMessage: 'Failed to render movie page: ' + e,
-            class: 'page-fail'
-        })
-    }
-})
-
-router.route('/:id/comment').post(async (req, res) => {
-    console.log('BODY IN COMMENT ROUTE:', req.body);
-    try {
-        helpers.checkValidString(req.params.id)
-        req.params.id = req.params.id.trim()
-        helpers.checkValidString(req.params.id)
-    } catch (e) {
-        return res.status(400).render('error', {
-            errorMessage: 'Error in id: ' + e,
-            class: 'invalid-id'
-        });
-    }
-    try {
-        helpers.checkValidString(req.body.text)
-        req.body.text = req.body.text.trim()
-        helpers.checkValidString(req.body.text)
-    } catch (e) {
-        return res.status(400).render('error', {
-            errorMessage: 'Error in comment text: ' + e,
-            class: 'invalid-comment'
-        });
-    }
-    try {
-        if (req.body.supercomment) 
-        {
-            await movieData.createComment(  req.params.id, 
-                                            req.session.user._id,
-                                            req.session.user.username, 
-                                            req.body.text,
-                                            req.body.supercomment)
-        }
-        else   
-        {
-            await movieData.createComment(  req.params.id, 
-                                            req.session.user._id,
-                                            req.session.user.username, 
-                                            req.body.text)
-        }
-    } catch (e) {
-        return res.status(500).render('error', {
-            errorMessage: 'Unable To Create Comment: ' + e,
-            class: 'comment-error'
-        });
-    }
-    try {
-        let movie = await movieData.getMovieById(req.params.id)
-        res.render('moviebyid', {
-            movie: movie,
-            Title: movie.name
-        })
-    } catch (e) {
-        return res.status(500).render('error', {
-            errorMessage: 'Failed to render movie page: ' + e,
-            class: 'page-fail'
-        })
-    }
-})
-
-router.route('/:id/add').post(async (req, res) => {
-    try {
-        helpers.checkValidString(req.params.id)
-        req.params.id = req.params.id.trim()
-        helpers.checkValidString(req.params.id)
-    } catch (e) {
-        return res.status(400).render('error', {
-            errorMessage: 'Error in id: ' + e,
-            class: 'invalid-id'
-        });
-    }
-    let movie = {}
-    try {
-        movie = await movieData.getMovieById(req.params.id)
-    } catch (e) {
-        return res.status(404).render('error', {
-            errorMessage: 'Movie Not Found: ' + e,
-            class: 'movie-not-found'
-        });
-    }
-    try {
-        accountData.addMovieById(req.params.id)
-    } catch (e) {
-        return res.status(500).render('error', {
-            errorMessage: 'Could not add movie to account: ' + e,
-            class: 'add-error'
-        })
-    }
-    try {
-        res.render('success', { Title: movie.name, successMessage: `${movie.name} successfully added to account!` })
-    } catch (e) {
-        return res.status(500).render('error', {
-            errorMessage: 'Failed to render movie creation page: ' + e,
-            class: 'page-fail'
-        })
-    }
-
-})
-
 router.route('/newmovie').get(async (req, res) => {
     try {
         res.render('newmovie', { Title: "Create New Movie" })
@@ -306,6 +176,135 @@ router.route('/moviecreated').post(async (req, res) => {
             class: 'page-fail'
         })
     }
+})
+
+router.route('/:id').get(async (req, res) => {
+    try {
+        helpers.checkValidString(req.params.id)
+        req.params.id = req.params.id.trim()
+        helpers.checkValidString(req.params.id)
+    } catch (e) {
+        return res.status(400).render('error', {
+            errorMessage: 'Error in id: ' + e,
+            class: 'invalid-id'
+        });
+    }
+    let movie = {}
+    try {
+        movie = await movieData.getMovieById(req.params.id)
+    } catch (e) {
+        return res.status(404).render('error', {
+            errorMessage: 'Movie Not Found: ' + e,
+            class: 'movie-not-found'
+        });
+    }
+    try {
+        res.render('moviebyid', {
+            movie: movie,
+            Title: movie.name
+        })
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Failed to render movie page: ' + e,
+            class: 'page-fail'
+        })
+    }
+})
+
+router.route('/:id/comment').post(async (req, res) => {
+    try {
+        helpers.checkValidString(req.params.id)
+        req.params.id = req.params.id.trim()
+        helpers.checkValidString(req.params.id)
+    } catch (e) {
+        return res.status(400).render('error', {
+            errorMessage: 'Error in id: ' + e,
+            class: 'invalid-id'
+        });
+    }
+    try {
+        helpers.checkValidString(req.body.text)
+        req.body.text = req.body.text.trim()
+        helpers.checkValidString(req.body.text)
+    } catch (e) {
+        return res.status(400).render('error', {
+            errorMessage: 'Error in comment text: ' + e,
+            class: 'invalid-comment'
+        });
+    }
+    try {
+        if (req.body.supercomment) 
+        {
+            await movieData.createComment(  req.params.id, 
+                                            req.session.user._id,
+                                            req.session.user.username, 
+                                            req.body.text,
+                                            req.body.supercomment)
+        }
+        else   
+        {
+            await movieData.createComment(  req.params.id, 
+                                            req.session.user._id,
+                                            req.session.user.username, 
+                                            req.body.text)
+        }
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Unable To Create Comment: ' + e,
+            class: 'comment-error'
+        });
+    }
+    try {
+        let movie = await movieData.getMovieById(req.params.id)
+        res.render('moviebyid', {
+            movie: movie,
+            Title: movie.name
+        })
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Failed to render movie page: ' + e,
+            class: 'page-fail'
+        })
+    }
+})
+
+router.route('/:id/add').post(async (req, res) => {
+    try {
+        helpers.checkValidString(req.params.id)
+        req.params.id = req.params.id.trim()
+        helpers.checkValidString(req.params.id)
+    } catch (e) {
+        return res.status(400).render('error', {
+            errorMessage: 'Error in id: ' + e,
+            class: 'invalid-id'
+        });
+    }
+    let movie = {}
+    try {
+        movie = await movieData.getMovieById(req.params.id)
+    } catch (e) {
+        return res.status(404).render('error', {
+            errorMessage: 'Movie Not Found: ' + e,
+            class: 'movie-not-found'
+        });
+    }
+    try {
+        accountData.addMovieById(req.params.id)
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Could not add movie to account: ' + e,
+            class: 'add-error'
+        })
+    }
+    try {
+        res.render('success', { Title: movie.name, successMessage: `${movie.name} successfully added to account!` })
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Failed to render movie creation page: ' + e,
+            class: 'page-fail'
+        })
+    }
+
 })
 
 export default router

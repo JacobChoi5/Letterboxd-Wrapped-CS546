@@ -1,100 +1,99 @@
-import {movies, /*actors, crew, genres, posters, studios, themes*/} from '../config/mongoCollections.js'
-import {ObjectId} from 'mongodb'
-import * as helpers from "../helpers.js"
+import {
+  movies /*actors, crew, genres, posters, studios, themes*/,
+} from "../config/mongoCollections.js";
+import { ObjectId } from "mongodb";
+import * as helpers from "../helpers.js";
 
 import fs from "fs";
 import csv from "csv-parser";
 import path from "path";
 import { fileURLToPath } from "url";
 
+export const seedDatabase = async () => {
+  console.log("Starting to Seed");
 
-export const seedDatabase = async () => {  
-  console.log("Starting to Seed")
+  const moviesList = await loadCsvAsArray("./database/movies.csv");
 
-  const moviesList = await loadCsvAsArray("./database/movies.csv")
+  console.log("Movies has been loaded");
 
-  console.log("Movies has been loaded")
+  const posters = await loadCsvAsArray("./database/posters.csv");
+  const studios = await loadCsvAsArray("./database/studios.csv");
+  const themes = await loadCsvAsArray("./database/themes.csv");
+  const genres = await loadCsvAsArray("./database/genres.csv");
+  const actors = await loadCsvAsArray("./database/actors.csv");
+  const crew = await loadCsvAsArray("./database/crew.csv");
 
-  const posters = await loadCsvAsArray("./database/posters.csv")
-  const studios = await loadCsvAsArray("./database/studios.csv")
-  const themes = await loadCsvAsArray("./database/themes.csv")
-  const genres = await loadCsvAsArray("./database/genres.csv")
-  const actors = await loadCsvAsArray("./database/actors.csv")
-  const crew = await loadCsvAsArray("./database/crew.csv")
-  
-  console.log("csv's have been turned into arrays")
-  
-  const posterList = {}
-  for (const poster of posters) 
-  {
-    posterList[poster.id] = poster.link
+  console.log("csv's have been turned into arrays");
+
+  const posterList = {};
+  for (const poster of posters) {
+    posterList[poster.id] = poster.link;
   }
 
-  const studiosGrouped = groupById(studios, "studio")
-  const themesGrouped = groupById(themes, "theme")
-  const genresGrouped = groupById(genres, "genre")
+  const studiosGrouped = groupById(studios, "studio");
+  const themesGrouped = groupById(themes, "theme");
+  const genresGrouped = groupById(genres, "genre");
 
-  const directors = crew.filter((row) => row.role === "Director")
-  const directorsGrouped = groupById(directors, "name")
+  const directors = crew.filter((row) => row.role === "Director");
+  const directorsGrouped = groupById(directors, "name");
 
-  const actorsGrouped = {}
+  const actorsGrouped = {};
 
   for (const row of actors) {
-    const id = row.id
+    const id = row.id;
 
     if (!actorsGrouped[id]) {
-      actorsGrouped[id] = []
+      actorsGrouped[id] = [];
     }
-    if (!row.role || row.role.trim() === ''){
-      row.role = "Unknown Role"
+    if (!row.role || row.role.trim() === "") {
+      row.role = "Unknown Role";
     }
-    actorsGrouped[id].push(
-      {
-        name: row.name,
-        role: row.role
-      }
-    )
+    actorsGrouped[id].push({
+      name: row.name,
+      role: row.role,
+    });
   }
 
-
-  console.log("Arrays have been formatted")
+  console.log("Arrays have been formatted");
 
   for (const movie of moviesList) {
-    const id = movie.id
-    movie.posterUrl = posterList[id]
+    const id = movie.id;
+    movie.posterUrl = posterList[id];
     movie.studios = studiosGrouped[id] ?? ["Unknown Studios"];
-    movie.themes  = themesGrouped[id]  ?? ["Unknown Themes"];
-    movie.genres  = genresGrouped[id]  ?? ["Unknown Genres"];
-    movie.actors  = actorsGrouped[id]  ?? [{name: "Unknown Actors", role: "Unknown Roles"}];
+    movie.themes = themesGrouped[id] ?? ["Unknown Themes"];
+    movie.genres = genresGrouped[id] ?? ["Unknown Genres"];
+    movie.actors = actorsGrouped[id] ?? [
+      { name: "Unknown Actors", role: "Unknown Roles" },
+    ];
     movie.directors = directorsGrouped[id] ?? ["Unknown Directors"];
 
+    if (!movie.tagline || movie.tagline.trim() === "") {
+      movie.tagline = "No Tagline";
+    }
+    if (!movie.description || movie.description.trim() === "") {
+      movie.description = "No Description";
+    }
+    if (!movie.posterUrl || movie.posterUrl.trim() === "") {
+      movie.posterUrl =
+        "https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg?20200913095930";
+    }
+    if (!movie.rating || movie.rating.trim() === "") {
+      movie.rating = NaN;
+    }
+    if (!movie.minute || movie.minute.trim() === "") {
+      movie.minute = NaN;
+    }
+    if (!movie.date || movie.date.trim() === "") {
+      movie.date = NaN;
+    }
 
-    if (!movie.tagline || movie.tagline.trim() === '') {
-      movie.tagline = "No Tagline"
-    }
-    if (!movie.description || movie.description.trim() === '') {
-      movie.description = "No Description"
-    }
-    if (!movie.posterUrl || movie.posterUrl.trim() === '') {
-      movie.posterUrl = "https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg?20200913095930"
-    }
-    if (!movie.rating || movie.rating.trim() === '') {
-      movie.rating = NaN
-    }
-    if (!movie.minute || movie.minute.trim() === '') {
-      movie.minute = NaN
-    }
-    if (!movie.date || movie.date.trim() === '') {
-      movie.date = NaN
-    }
-
-    console.log(movie)
+    console.log(movie);
 
     await createNewMovie(
       Number(movie.id),
       movie.name,
       Number(movie.date),
-      movie.tagline ,
+      movie.tagline,
       movie.description,
       Number(movie.minute),
       Number(movie.rating),
@@ -103,11 +102,10 @@ export const seedDatabase = async () => {
       movie.genres,
       movie.posterUrl,
       movie.themes,
-      movie.studios,
-    )
+      movie.studios
+    );
   }
-
-}
+};
 
 //https://www.npmjs.com/package/csv-parser
 const loadCsvAsArray = (csvFilePath) => {
@@ -119,7 +117,7 @@ const loadCsvAsArray = (csvFilePath) => {
       .on("end", () => resolve(arr))
       .on("error", reject);
   });
-}
+};
 
 const groupById = (arr, key) => {
   const output = {};
@@ -129,7 +127,7 @@ const groupById = (arr, key) => {
     output[id].push(row[key]);
   }
   return output;
-}
+};
 
 export const createNewMovie = async (
   popularity,
@@ -139,42 +137,43 @@ export const createNewMovie = async (
   description,
   minute,
   rating,
-  directors,//array
-  actors,//array
-  genres,//array
+  directors, //array
+  actors, //array
+  genres, //array
   posterUrl,
-  themes,//array
-  studios//array
+  themes, //array
+  studios //array
 ) => {
-
-  if (!Number.isInteger(popularity) || popularity <= 0) 
-  {
-    throw 'Movie ID must be a positive integer';
+  if (!Number.isInteger(popularity) || popularity <= 0) {
+    throw "Movie ID must be a positive integer";
   }
 
-  helpers.checkValidString(name, "Movie Name")
+  helpers.checkValidString(name, "Movie Name");
 
-  if ((!Number.isInteger(date) || date < 1800 || date > 2050) && !Number.isNaN(date)) 
-  {
-    throw 'Invalid release year';
+  if (
+    (!Number.isInteger(date) || date < 1800 || date > 2050) &&
+    !Number.isNaN(date)
+  ) {
+    throw "Invalid release year";
   }
 
-  helpers.checkValidString(tagline, "Movie Tagline")
-  helpers.checkValidString(description, "Movie Description")
-  
-  if (!Number.isInteger(minute) && !Number.isNaN(minute)) 
-  {
-    throw 'Movie minutes must be a positive integer';
+  helpers.checkValidString(tagline, "Movie Tagline");
+  helpers.checkValidString(description, "Movie Description");
+
+  if (!Number.isInteger(minute) && !Number.isNaN(minute)) {
+    throw "Movie minutes must be a positive integer";
   }
 
-  if ((typeof rating !== "number" || rating < 0 || rating > 5) && !Number.isNaN(rating)) 
-  {
-    throw 'Rating must be a number between 0 and 5';
+  if (
+    (typeof rating !== "number" || rating < 0 || rating > 5) &&
+    !Number.isNaN(rating)
+  ) {
+    throw "Rating must be a number between 0 and 5";
   }
 
-  helpers.checkValidString(posterUrl, "Poster Url")
-  helpers.checkValidStringArray(directors, "Directors")
-  
+  helpers.checkValidString(posterUrl, "Poster Url");
+  helpers.checkValidStringArray(directors, "Directors");
+
   if (!Array.isArray(actors)) {
     throw "Actors must be an array";
   }
@@ -182,37 +181,31 @@ export const createNewMovie = async (
     throw "Actors array cannot be empty";
   }
   actors.forEach((actor, index) => {
-    if (typeof actor !== "object" || actor === null || Array.isArray(actor)) 
-    {
+    if (typeof actor !== "object" || actor === null || Array.isArray(actor)) {
       throw `Actor at index ${index} must be an object`;
     }
-    if (!actor.name || typeof actor.name !== "string") 
-    {
+    if (!actor.name || typeof actor.name !== "string") {
       throw `Actor at index ${index} must have a valid 'name' string`;
     }
-    if (actor.name.trim().length === 0) 
-    {
+    if (actor.name.trim().length === 0) {
       throw `Actor name at index ${index} cannot be empty`;
     }
-    if (!actor.role || typeof actor.role !== "string") 
-    {
+    if (!actor.role || typeof actor.role !== "string") {
       throw `Actor at index ${index} must have a valid 'role' string`;
     }
-    if (actor.role.trim().length === 0) 
-    {
+    if (actor.role.trim().length === 0) {
       throw `Actor role at index ${index} cannot be empty`;
     }
-  })
+  });
 
-  helpers.checkValidStringArray(genres, "Genres")
-  helpers.checkValidStringArray(themes, "Themes")
-  helpers.checkValidStringArray(studios, "Studios")
+  helpers.checkValidStringArray(genres, "Genres");
+  helpers.checkValidStringArray(themes, "Themes");
+  helpers.checkValidStringArray(studios, "Studios");
 
-  let comments = []
+  let comments = [];
 
   const movieCollection = await movies();
-  let newMovie = 
-  {
+  let newMovie = {
     popularity,
     name,
     date,
@@ -225,54 +218,180 @@ export const createNewMovie = async (
     genres,
     posterUrl,
     themes,
-    studios, 
-    comments
-  }
+    studios,
+    comments,
+  };
 
   const insertInfo = await movieCollection.insertOne(newMovie);
-  if (!insertInfo.acknowledged || !insertInfo.insertedId)
-  {
-    throw 'Error: Could not add movie';
+  if (!insertInfo.acknowledged || !insertInfo.insertedId) {
+    throw "Error: Could not add movie";
   }
   const newId = insertInfo.insertedId.toString();
 
   // const movie = await getMovieById(newId);
   return newId;
-}
+};
 
 export const getMovieById = async (id) => {
-  if (!id)
-  {
-    throw "Id must be supplied"
+  if (!id) {
+    throw "Id must be supplied";
   }
-  if (typeof id !== "string") 
-  {
+  if (typeof id !== "string") {
     id = id.toString();
   }
   id = id.trim();
-  if (!ObjectId.isValid(id)) 
-  {
+  if (!ObjectId.isValid(id)) {
     throw "Movie ID must be a valid Object ID";
   }
   const movieCollection = await movies();
   const movie = await movieCollection.findOne({ _id: new ObjectId(id) });
-  if (!movie) 
-  {
+  if (!movie) {
     throw "No movie with that id";
   }
   return movie;
 };
 
+export const updateMovie = async (
+  id,
+  popularity,
+  name,
+  date,
+  tagline,
+  description,
+  minute,
+  rating,
+  directors, //array
+  actors, //array
+  genres, //array
+  posterUrl,
+  themes, //array
+  studios //array
+) => {
+  helpers.checkValidId(id, "id");
+
+  if (!Number.isInteger(popularity) || popularity <= 0) {
+    throw "Movie ID must be a positive integer";
+  }
+
+  helpers.checkValidString(name, "Movie Name");
+
+  if (
+    (!Number.isInteger(date) || date < 1800 || date > 2050) &&
+    !Number.isNaN(date)
+  ) {
+    throw "Invalid release year";
+  }
+
+  helpers.checkValidString(tagline, "Movie Tagline");
+  helpers.checkValidString(description, "Movie Description");
+
+  if (!Number.isInteger(minute) && !Number.isNaN(minute)) {
+    throw "Movie minutes must be a positive integer";
+  }
+
+  if (
+    (typeof rating !== "number" || rating < 0 || rating > 5) &&
+    !Number.isNaN(rating)
+  ) {
+    throw "Rating must be a number between 0 and 5";
+  }
+
+  helpers.checkValidString(posterUrl, "Poster Url");
+  helpers.checkValidStringArray(directors, "Directors");
+
+  if (!Array.isArray(actors)) {
+    throw "Actors must be an array";
+  }
+  if (actors.length === 0) {
+    throw "Actors array cannot be empty";
+  }
+  actors.forEach((actor, index) => {
+    if (typeof actor !== "object" || actor === null || Array.isArray(actor)) {
+      throw `Actor at index ${index} must be an object`;
+    }
+    if (!actor.name || typeof actor.name !== "string") {
+      throw `Actor at index ${index} must have a valid 'name' string`;
+    }
+    if (actor.name.trim().length === 0) {
+      throw `Actor name at index ${index} cannot be empty`;
+    }
+    if (!actor.role || typeof actor.role !== "string") {
+      throw `Actor at index ${index} must have a valid 'role' string`;
+    }
+    if (actor.role.trim().length === 0) {
+      throw `Actor role at index ${index} cannot be empty`;
+    }
+  });
+
+  helpers.checkValidStringArray(genres, "Genres");
+  helpers.checkValidStringArray(themes, "Themes");
+  helpers.checkValidStringArray(studios, "Studios");
+
+  let comments = [];
+
+  let updated_movie = {
+    id,
+    popularity,
+    name,
+    date,
+    tagline,
+    description,
+    minute,
+    rating,
+    directors,
+    actors,
+    genres,
+    posterUrl,
+    themes,
+    studios,
+    comments,
+  };
+
+  const movieCollection = await movies();
+
+  const updateInfo = await movieCollection.findOneAndReplace(
+    { _id: new ObjectId(id) },
+    updated_movie,
+    { returnDocument: "after" }
+  );
+  if (!updateInfo)
+    throw `Error: Update failed, could not find a account with id of ${id}`;
+
+  return updateInfo;
+};
+
+export const deleteMovie = async (id) => {
+  checkValidId(id, "id");
+  let movieCollection = await movies();
+  let findMovie = await movieCollection.findOne({
+    _id: new ObjectId(id),
+  });
+
+  if (!findMovie) {
+    throw "movie with that id could not be found";
+  }
+
+  const deletionInfo = await accountCollection.deleteOne({
+    _id: new ObjectId(id),
+  });
+
+  if (deletionInfo.deletedCount == 0) {
+    throw "Error in deleting movie";
+  }
+
+  return { id: id, deleted: true };
+};
+
 export const getMoviesByDirector = async (name) => {
   helpers.checkValidString(name, "Director name");
   const movieCollection = await movies();
-  return movieCollection.find({directors: name.trim() }).toArray();
+  return movieCollection.find({ directors: name.trim() }).toArray();
 };
 
 export const getMoviesByActor = async (name) => {
   helpers.checkValidString(name, "Actor name");
   const movieCollection = await movies();
-  return movieCollection.find({"actors.name": name.trim() }).toArray();
+  return movieCollection.find({ "actors.name": name.trim() }).toArray();
 };
 
 export const getMoviesByGenre = async (genre) => {
@@ -310,23 +429,25 @@ export const getMoviesByPopularity = async (popularity) => {
   helpers.checkValidString(popularity, "Popularity");
   const movieCollection = await movies();
   return movieCollection.findOne({ popularity });
-
 };
 
 //super comment is for when a comment is made under another comment rather than just on the movie
-export const createComment = async (movieId, userId, username, text, superCommentId) => {
-  if (!movieId || !ObjectId.isValid(movieId)) 
-  {
+export const createComment = async (
+  movieId,
+  userId,
+  username,
+  text,
+  superCommentId
+) => {
+  if (!movieId || !ObjectId.isValid(movieId)) {
     throw "Movie ID must be a valid ObjectId";
   }
-  if (!userId || !ObjectId.isValid(userId)) 
-  {
+  if (!userId || !ObjectId.isValid(userId)) {
     throw "User ID must be a valid ObjectId";
   }
   helpers.checkValidString(username, "Username");
   helpers.checkValidString(text, "Comment Body");
-  if (superCommentId && !ObjectId.isValid(superCommentId)) 
-  {
+  if (superCommentId && !ObjectId.isValid(superCommentId)) {
     throw "Super Comment ID must be a valid ObjectId";
   }
 
@@ -337,98 +458,92 @@ export const createComment = async (movieId, userId, username, text, superCommen
     text,
     postedAt: new Date(),
     likes: [],
-    subcomments: []
-  }
+    subcomments: [],
+  };
 
   let movie = await getMovieById(movieId);
-  let comments = movie.comments
+  let comments = movie.comments;
 
-  if (superCommentId){
+  if (superCommentId) {
     replyToComment(comments, superCommentId, comment);
   } else {
     comments.push(comment);
   }
   const movieCollection = await movies();
 
-  const awaitInfo = await movieCollection.updateOne({ _id: new ObjectId(movieId) }, {$set: {comments: comments}});
-  if (!awaitInfo.acknowledged || awaitInfo.modifiedCount === 0)
-  {
-    throw 'Error: Could not add comment';
+  const awaitInfo = await movieCollection.updateOne(
+    { _id: new ObjectId(movieId) },
+    { $set: { comments: comments } }
+  );
+  if (!awaitInfo.acknowledged || awaitInfo.modifiedCount === 0) {
+    throw "Error: Could not add comment";
   }
   return comments;
-}
+};
 
 const replyToComment = (comments, id, newComment) => {
-  for (let comment of comments) 
-  {
-    if (comment._id.toString() === id.toString()) 
-    {
-      comment.subcomments.push(newComment)
-      return comments
+  for (let comment of comments) {
+    if (comment._id.toString() === id.toString()) {
+      comment.subcomments.push(newComment);
+      return comments;
     }
-    let newSubcomments = replyToComment(comment.subcomments, id, newComment)
-    if (newSubcomments)
-    {
+    let newSubcomments = replyToComment(comment.subcomments, id, newComment);
+    if (newSubcomments) {
       comment.subcomments = newSubcomments;
       return comments;
     }
   }
   return null;
-}
+};
 
 export const toggleLike = async (movieId, commentId, userId) => {
-  if (!movieId || !ObjectId.isValid(movieId)) 
-  {
+  if (!movieId || !ObjectId.isValid(movieId)) {
     throw "Movie ID must be a valid ObjectId";
   }
-  if (!userId || !ObjectId.isValid(userId)) 
-  {
+  if (!userId || !ObjectId.isValid(userId)) {
     throw "User ID must be a valid ObjectId";
   }
-  if (!commentId || !ObjectId.isValid(commentId)) 
-  {
+  if (!commentId || !ObjectId.isValid(commentId)) {
     throw "Comment ID must be a valid ObjectId";
   }
 
   let movie = await getMovieById(movieId);
-  let comments = movie.comments
+  let comments = movie.comments;
 
-  comments = findAndToggle(comments, commentId, userId)
+  comments = findAndToggle(comments, commentId, userId);
 
   const movieCollection = await movies();
-  const awaitInfo = await movieCollection.updateOne({_id: movieId}, {$set: {comments: comments}});
-  if (!awaitInfo.acknowledged || awaitInfo.modifiedCount === 0)
-  {
-    throw 'Error: Could not add comment';
+  const awaitInfo = await movieCollection.updateOne(
+    { _id: new ObjectId(movieId) },
+    { $set: { comments: comments } }
+  );
+  if (!awaitInfo.acknowledged || awaitInfo.modifiedCount === 0) {
+    throw "Error: Could not like comment";
   }
-  return comments
-}
+  return comments;
+};
 
-const findAndToggle =  (comments, id, userId) => {
-  for (let comment of comments) 
-  {
-    if (comment._id.toString() === id.toString()) 
-    {
-      let index = comment.likes.findIndex(u => u.toString() === userId.toString());
-      if (index !== -1)
-      {
-        comment.likes.splice(index, 1)
+const findAndToggle = (comments, id, userId) => {
+  for (let comment of comments) {
+    if (comment._id.toString() === id.toString()) {
+      let index = comment.likes.findIndex(
+        (u) => u.toString() === userId.toString()
+      );
+      if (index !== -1) {
+        comment.likes.splice(index, 1);
+      } else {
+        comment.likes.push(userId);
       }
-      else
-      {
-      comment.likes.push(userId)
-      }
-      return comments
+      return comments;
     }
-    let newSubcomments = findAndToggle(comment.subcomments, id, userId)
-    if (newSubcomments != null)
-    {
+    let newSubcomments = findAndToggle(comment.subcomments, id, userId);
+    if (newSubcomments != null) {
       comment.subcomments = newSubcomments;
       return comments;
     }
   }
   return null;
-}
+};
 
 /*
 These may be valuable for other search functions however may be unneccesary if all is held in the movie collection
