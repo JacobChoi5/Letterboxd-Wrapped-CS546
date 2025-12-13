@@ -45,7 +45,7 @@ app.use((req,res,next) => {
    req.user = req.session.user;
     req.userId = req.session.user._id;
     req.username = req.session.user.username;
-}
+}[]
 console.log("user logged in currently is " + req.user);
 
 next();
