@@ -91,10 +91,10 @@ router.route('/login').post(async (req, res) => {
         let account = await accountData.getAccountByUsername(username)
         if (await bcrypt.compare(password, account.password)) {
             //my account is account
-            //TODO @ Sutej
+            //TODO @ Sutej store inside the session as I wasnt doing that befoire. 
             req.session.user = {
-                _id: user.id,
-                username: user.username
+                _id: account._id.toString(),
+                username: account.username
             }
         } else {
             throw "invalid credentials"
@@ -155,7 +155,7 @@ router.route('/signupconfirm').post(async (req, res) => {
     }
 })
 
-router.route('/myaccount').get(requireLogin, async (req, res) => {
+router.route('/myaccount').get( async (req, res) => {
     let curuser = {}
     try{
         currentUserId = helpers.checkValidId(req.session.user._id)
@@ -170,7 +170,18 @@ router.route('/myaccount').get(requireLogin, async (req, res) => {
         })
     }
     try {
+        req.session.user = {
+        _id: account._id.toString(),
+        username: account.username
+        };
+        if(req.session.user)
+        {
         res.render('myaccount', { Title: "My Account", account: curuser })
+        }
+        else
+        {
+            res.render('signupconfirm');
+        }
     } catch (e) {
         return res.status(500).render('error', {
             errorMessage: 'Failed to render account page: ' + e,
