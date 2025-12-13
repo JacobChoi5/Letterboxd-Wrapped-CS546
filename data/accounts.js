@@ -4,6 +4,7 @@ import * as movieData from "../data/movies.js";
 import { accounts, userMovieData } from "../config/mongoCollections.js";
 import { ObjectId } from "mongodb";
 
+
 //ensure top actors does not have a logic issue
 
 export const createAccount = async (
@@ -411,6 +412,11 @@ export const calculateStatistics = async (id, period) => {
   return statistics;
 };
 
+const normalizeMovieId = (val) => {
+  if (!val) return "";
+  return String(val).trim().replace(/\r/g, "");
+};
+
 // This basically imports the user’s Letterboxd ZIP, and merges it into their movie data in MongoDB or adds it for the first time,
 // and makes all profile  or refreshes it. This is what creates the data that our
 // getters/setters later read and update within calculateStatistics().
@@ -438,7 +444,7 @@ export const importAllUserData = async (userId, zipBuffer) => {
   }
   let diaryRows = [];
   let ratingRows = [];
-  const reviewRows = [];
+  let reviewRows = [];
   if (diaryCSV) {
     diaryRows = csvData.parse(diaryCSV);
   }
@@ -451,7 +457,8 @@ export const importAllUserData = async (userId, zipBuffer) => {
   // Process diary file the  watch dates
   for (let i = 0; i < diaryRows.length; i++) {
     const row = diaryRows[i];
-    const movieId = row["Letterboxd URI"];
+    const rawId = row["Letterboxd URI"] || row["Link"] || row["URL"];
+    const movieId = normalizeMovieId(rawId);
     let movieName = "";
     if (row["Name"]) {
       movieName = row["Name"];
@@ -460,6 +467,11 @@ export const importAllUserData = async (userId, zipBuffer) => {
     if (row["Date"]) {
       dateWatched = row["Date"];
     }
+    let rewatchCount = 0; 
+    if (row["Rewatch"] && String(row["Rewatch"]).toLowerCase() === "yes") 
+      {
+      rewatchCount = 1;
+      }
     const existing = await movieCol.findOne({
       userId: userId,
       movieId: movieId,
@@ -467,7 +479,7 @@ export const importAllUserData = async (userId, zipBuffer) => {
     if (existing) {
       await movieCol.updateOne(
         { userId: userId, movieId: movieId },
-        { $set: { movieName, dateWatched } }
+        { $set: { movieName, dateWatched, rewatchCount: rewatchCount } }
       );
     } else {
       await movieCol.insertOne({
@@ -476,7 +488,7 @@ export const importAllUserData = async (userId, zipBuffer) => {
         movieName: movieName,
         dateWatched: dateWatched,
         rating: null,
-        rewatchCount: 0,
+        rewatchCount: rewatchCount,
         reviewDescription: "",
       });
     }
@@ -484,7 +496,8 @@ export const importAllUserData = async (userId, zipBuffer) => {
   // ratings file import
   for (let i = 0; i < ratingRows.length; i++) {
     const row = ratingRows[i];
-    const movieId = row["Letterboxd URI"];
+    const rawId = row["Letterboxd URI"] || row["Link"] || row["URL"];
+    const movieId = normalizeMovieId(rawId);
     let rating = null;
     if (row["Rating"]) {
       rating = Number(row["Rating"]);
@@ -513,7 +526,8 @@ export const importAllUserData = async (userId, zipBuffer) => {
   } // Process the  reviews
   for (let i = 0; i < reviewRows.length; i++) {
     const row = reviewRows[i];
-    const movieId = row["Letterboxd URI"];
+    const rawId = row["Letterboxd URI"] || row["Link"] || row["URL"];
+    const movieId = normalizeMovieId(rawId);
     let reviewDescription = "";
     if (row["Review"]) {
       reviewDescription = row["Review"];
@@ -585,6 +599,7 @@ export const getAccountByUsername = async (username) => {
     account_list.push({
       _id: account._id.toString(),
       username: account.username,
+      password: account.password
     });
   }
   return account_list;

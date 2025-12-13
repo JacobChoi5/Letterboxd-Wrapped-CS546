@@ -1,14 +1,16 @@
 <main>
-    <p>Time to login.</p>
+     <p>Time to login.</p>
+  {{#if error}}
+    <p class="error">{{error}}</p>
+  {{/if}}
 
-    <form action="/login" method="POST" class="login-form">
-        <label for="username">Username</label>
-        <input type="text" id="username" name="username" required>
+  <form action="/login" method="POST">
+    <label>Username</label>
+    <input name="username" required>
 
-        <label for="password">Password</label>
-        <input type="text" id="password" name="password" required>
+    <label>Password</label>
+    <input type="password" name="password" required>
 
-        <button type="submit">Sign Up</button>
-    </form>
-
+    <button type="submit">Log In</button>
+  </form>
 </main>
