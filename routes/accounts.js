@@ -8,7 +8,8 @@ import * as accountData from '../data/accounts.js'
 import bcrypt from 'bcrypt'
 import multer from 'multer';
 import xss from 'xss'
-const upload = multer(); 
+import { userMovieData } from '../config/mongoCollections.js'
+const upload = multer();
 
 router.route('/').get(async (req, res) => {
     try {
@@ -83,18 +84,16 @@ router.route('/login').get(async (req, res) => {
 
 router.route('/login').post(async (req, res) => {
     try {
-        let {username, password} = req.body;
+        let { username, password } = req.body;
         if (!username || !password) {
-         throw "Username and password are required";
+            throw "Username and password are required";
         }
         let accounts = await accountData.getAccountByUsername(username);
         let account = accounts[0];
-        if(!account || !account.password)
-        {
+        if (!account || !account.password) {
             throw "Invalid Creditioals"
         }
-        if (await bcrypt.compare(password, account.password)) 
-            {
+        if (await bcrypt.compare(password, account.password)) {
             //my account is account
             //TODO @ Sutej store inside the session as I wasnt doing that befoire. 
             req.session.user = {
@@ -102,16 +101,15 @@ router.route('/login').post(async (req, res) => {
                 username: account.username
             }
             return res.redirect('/myaccount');
-             } 
-            else
-            {
+        }
+        else {
             throw "invalid credentials";
-            }
+        }
     } catch (e) {
-        return res.status(401).render('login', 
+        return res.status(401).render('login',
             {
-            Title: "Login",
-             error: "Username or password is incorrect"
+                Title: "Login",
+                error: "Username or password is incorrect"
             });
     }
 })
@@ -133,19 +131,15 @@ router.route('/signupconfirm').post(async (req, res) => {
         console.log(accountsignupdata)
 
         let age = Number(accountsignupdata.age)
-        console.log(accountsignupdata.age)
-        console.log(typeof age)
         helpers.checkValidAge(age)
-        console.log("after checking age")
 
         let description = ""
 
         if (accountsignupdata.description) {
-            console.log("look at description")
             helpers.checkValidString(accountsignupdata.description)
             description = xss(accountsignupdata.description.trim())
             helpers.checkValidString(description)
-        } else{
+        } else {
             description = ""
         }
 
@@ -159,8 +153,8 @@ router.route('/signupconfirm').post(async (req, res) => {
         };
         // return  res.redirect('/myaccount');
         return res.status(200).json({
-        success: true,
-        message: "Signup successful! Click My Account."
+            success: true,
+            message: "Signup successful! Click My Account."
         });
         // return res.json({success: true, message: "Signup successful!"})
     } catch (e) {
@@ -173,14 +167,19 @@ router.route('/signupconfirm').post(async (req, res) => {
     }
 })
 
-router.route('/myaccount').get(requireLogin,async (req, res) => {
+router.route('/myaccount').get(requireLogin, async (req, res) => {
     let curuser = {}
-    try{
+    let statistics = {}
+    try {
         let currentUserId = req.session.user._id
         helpers.checkValidId(currentUserId)
         currentUserId = currentUserId.trim()
         helpers.checkValidId(currentUserId)
         curuser = await accountData.getAccountById(currentUserId)
+        console.log("current user: ")
+        console.log(curuser)
+        //statistics = await accountData.calculateStatistics(currentUserId)
+        //console.log(statistics)
         res.render('myaccount', {
             Title: "My Account",
             account: curuser
@@ -189,6 +188,54 @@ router.route('/myaccount').get(requireLogin,async (req, res) => {
         return res.status(401).render('error', {
             errorMessage: 'Invalid credentials: ' + e,
             class: 'login-fail'
+        })
+    }
+})
+
+router.route('/updatemyccount').post(requireLogin, async (req, res) => {
+    let curuser = {}
+    let age = NaN
+    let description = ""
+    try {
+        let currentUserId = req.session.user._id
+        helpers.checkValidId(currentUserId)
+        currentUserId = currentUserId.trim()
+        helpers.checkValidId(currentUserId)
+        curuser = await accountData.getAccountById(currentUserId)
+
+        age = Number(req.body.age)
+        helpers.checkValidAge(age)
+
+        helpers.checkValidString(req.body.description)
+        description = xss(req.body.description.trim())
+        helpers.checkValidString(description)
+    } catch (e) {
+        console.log("error: " + e)
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid input data',
+            error: e
+        });
+    }
+    try {
+        accountData.updateAccountInformation(curuser._id,
+            curuser.username,
+            curuser.password,
+            age,
+            curuser.isAdmin,
+            curuser.isPrivate,
+            description,
+            curuser.zip_files,
+            curuser.follwers,
+            curuser.following)
+        return res.status(200).json({
+            success: true,
+            message: "Account Update Successful"
+        })
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Failed to update account info: ' + e,
+            class: 'update-acount-fail'
         })
     }
 })
@@ -205,33 +252,30 @@ router.route('/uploaddata').get(async (req, res) => {
 })
 
 router.route('/uploaddata').post(requireLogin,
-  upload.single('file'),async (req, res) => { // got this line from npm website 
-    if (!req.file) 
-        {
-        return res.status(400).render("error", 
-            {
-            errorMessage: "No ZIP file uploaded",
-            class: "page-fail"
-        });
-    }
-    try 
-    {
-        await accountData.importAllUserData(req.session.user._id, req.file.buffer);
-        return res.render("success", 
-            {
-            Title: "Data Upload",
-            successMessage: "Data has been successfully uploaded!"
-            });
-    } 
-    catch (e) 
-    {
-        return res.status(500).render("error", 
-            {
-            errorMessage: "Upload failed: " + e,
-            class: "page-fail"
-        });
-    }
-});
+    upload.single('file'), async (req, res) => { // got this line from npm website 
+        if (!req.file) {
+            return res.status(400).render("error",
+                {
+                    errorMessage: "No ZIP file uploaded",
+                    class: "page-fail"
+                });
+        }
+        try {
+            await accountData.importAllUserData(req.session.user._id, req.file.buffer);
+            return res.render("success",
+                {
+                    Title: "Data Upload",
+                    successMessage: "Data has been successfully uploaded!"
+                });
+        }
+        catch (e) {
+            return res.status(500).render("error",
+                {
+                    errorMessage: "Upload failed: " + e,
+                    class: "page-fail"
+                });
+        }
+    });
 
 
 router.route('/addmovie').get(async (req, res) => {
@@ -269,7 +313,8 @@ router.route('/accountlookupresults').post(async (req, res) => {
         });
     }
     try {
-        let accounts = await accountData.searchAccountsByUsername(accountlookupdata.accountName)
+        let accounts = await accountData.getAccountByUsername(accountlookupdata.accountName)
+        console.log(accounts)
         res.render('accountlookupresults', { accounts: accounts, Title: accountlookupdata.accountName + " Results" })
     } catch (e) {
         return res.status(500).render('error', {
@@ -312,5 +357,7 @@ router.route('/:id').get(async (req, res) => {
         })
     }
 })
+
+
 
 export default router
