@@ -12,24 +12,34 @@
     {{/each}}
 
     <p>Actors:</p>
-    {{#each movie.actors}}
-    <p>{{this.name}} as {{this.role}}</p>
-    {{/each}}
+    <ul id="actors">
+        {{#each movie.actors}}
+        <li>{{this.name}} as {{this.role}}</li>
+        {{/each}}
+    </ul>
+
+    <button type="button" id="actorsButton" data-movie-id="{{movie._id}}">See All</button>
 
     <p>Genres:</p>
-    {{#each movie.genres}}
-    <p>{{this}}</p>
-    {{/each}}
+    <ul>
+        {{#each movie.genres}}
+        <li>{{this}}</li>
+        {{/each}}
+    </ul>
 
     <p>Themes:</p>
-    {{#each movie.themes}}
-    <p>{{this}}</p>
-    {{/each}}
+    <ul>
+        {{#each movie.themes}}
+        <li>{{this}}</li>
+        {{/each}}
+    </ul>
 
     <p>Studios:</p>
-    {{#each movie.studios}}]
-    <p>{{this}}</p>
-    {{/each}}
+    <ul>
+        {{#each movie.studios}}
+        <li>{{this}}</li>
+        {{/each}}
+    </ul>
 
     <p>Comment:</p>
     <form action="/movies/{{movie._id}}/comment" method="POST">
@@ -45,5 +55,9 @@
     <form action="/movies/{{movie._id}}/add" method="POST">
         <button type="submit">Add Movie</button>
     </form>
+
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"
+        integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+    <script src="/js/actors.js"></script>
 
 </main>
