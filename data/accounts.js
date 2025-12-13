@@ -4,7 +4,7 @@ import * as movieData from "../data/movies.js";
 import { accounts, userMovieData } from "../config/mongoCollections.js";
 import { ObjectId } from "mongodb";
 
-
+//fix statistics
 //ensure top actors does not have a logic issue
 
 export const createAccount = async (
@@ -25,17 +25,13 @@ export const createAccount = async (
   //valide age
   checkValidAge(age);
 
-  if (typeof isAdmin != "boolean") {
-    isAdmin = false;
-  }
+  isPrivate = false;
 
   if (typeof isPrivate != "boolean") {
     isPrivate = false;
   }
 
-  if (!profile_description) {
-    profile_description = "";
-  } else {
+  if (profile_description != "" && typeof profile_description == "string") {
     checkValidString(profile_description);
   }
 
@@ -467,11 +463,10 @@ export const importAllUserData = async (userId, zipBuffer) => {
     if (row["Date"]) {
       dateWatched = row["Date"];
     }
-    let rewatchCount = 0; 
-    if (row["Rewatch"] && String(row["Rewatch"]).toLowerCase() === "yes") 
-      {
+    let rewatchCount = 0;
+    if (row["Rewatch"] && String(row["Rewatch"]).toLowerCase() === "yes") {
       rewatchCount = 1;
-      }
+    }
     const existing = await movieCol.findOne({
       userId: userId,
       movieId: movieId,
@@ -599,7 +594,7 @@ export const getAccountByUsername = async (username) => {
     account_list.push({
       _id: account._id.toString(),
       username: account.username,
-      password: account.password
+      password: account.password,
     });
   }
   return account_list;
@@ -627,88 +622,85 @@ export const deleteAccount = async (id) => {
 };
 
 export const addFollower = async (userId, followerId) => {
-  let user = await getAccountById(userId);
-  let follower = await getAccountById(followerId);
+  checkValidId(userId);
+  checkValidId(followerId);
 
-  if (!user["followers"].includes(followerId)) {
-    user["followers"].push(follower["_id"].toString());
-  }
-  if (!follower["following"].includes(userId)) {
-    follower["following"].push(user["_id"].toString());
-  }
-  await updateAccountInformation(
-    user["_id"].toString(),
-    user["username"],
-    user["password"],
-    user["age"],
-    user["isAdmin"],
-    user["isPrivate"],
-    user["profile_description"],
-    user["zip_files"],
-    user["followers"],
-    user["following"]
+  let accountCollection = await accounts();
+  //Source: https://www.geeksforgeeks.org/mongodb/mongodb-addtoset-operator/
+  const updateUser = await accountCollection.updateOne(
+    { _id: new ObjectId(userId) },
+    { $addToSet: { followers: followerId } }
   );
 
-  await updateAccountInformation(
-    follower["_id"].toString(),
-    follower["username"],
-    follower["password"],
-    follower["age"],
-    follower["isAdmin"],
-    follower["isPrivate"],
-    follower["profile_description"],
-    follower["zip_files"],
-    follower["followers"],
-    follower["following"]
+  const updateFollower = await accountCollection.updateOne(
+    { _id: new ObjectId(followerId) },
+    { $addToSet: { following: userId } }
   );
+
+  if (updateUser.matchedCount == 0) {
+    throw "Error in updating followers list";
+  }
+
+  if (updateFollower.matchedCount == 0) {
+    throw "Error in updating following list";
+  }
+
+  return getAccountById(userId);
 };
 
-export const updateAccountInformation = async (
-  id,
-  username,
-  password,
-  age,
-  isAdmin,
-  isPrivate,
-  profile_description,
-  zip_files,
-  followers,
-  following
-) => {
-  //validate string parameters
-  checkValidString(username, "username");
-  checkValidString(password, "password");
-
-  //valide age
+export const updateAge = async (userId, age) => {
+  checkValidId(userId);
   checkValidAge(age);
 
-  if (profile_description) {
-    checkValidString(profile_description, "profile description");
+  let accountCollection = await accounts();
+  //Source: https://www.geeksforgeeks.org/mongodb/mongodb-addtoset-operator/
+  const updateUser = await accountCollection.updateOne(
+    { _id: new ObjectId(userId) },
+    { $set: { age: age } }
+  );
+
+  if (updateUser.matchedCount == 0) {
+    throw "Error in updating age";
   }
 
-  let newAccount = {
-    _id: new ObjectId(id),
-    username: username,
-    password: password,
-    age: age,
-    isAdmin: isAdmin,
-    isPrivate: isPrivate,
-    profile_description: profile_description,
-    zip_files: zip_files,
-    followers: followers,
-    following: following,
-  };
+  return getAccountById(userId);
+};
 
-  //Addding the account to the DB and returning the account
-  const accountCollection = await accounts();
+export const updateIsPrivate = async (userId, status) => {
+  checkValidId(userId);
+  if (typeof status != "boolean") {
+    throw "status must be a boolean";
+  }
 
-  const updateInfo = await accountCollection.findOneAndReplace(
-    { _id: new ObjectId(id) },
-    newAccount,
-    { returnDocument: "after" }
+  let accountCollection = await accounts();
+  //Source: https://www.geeksforgeeks.org/mongodb/mongodb-addtoset-operator/
+  const updateUser = await accountCollection.updateOne(
+    { _id: new ObjectId(userId) },
+    { $set: { isPrivate: status } }
   );
-  if (!updateInfo)
-    throw `Error: Update failed, could not find a account with id of ${id}`;
 
-  return updateInfo;
+  if (updateUser.matchedCount == 0) {
+    throw "Error in updating privacy setting";
+  }
+
+  return getAccountById(userId);
+};
+
+export const updateProfileDescription = async (userId, description) => {
+  checkValidId(userId);
+  if (profile_description != "" && typeof profile_description == "string") {
+    checkValidString(profile_description);
+  }
+  let accountCollection = await accounts();
+  //Source: https://www.geeksforgeeks.org/mongodb/mongodb-addtoset-operator/
+  const updateUser = await accountCollection.updateOne(
+    { _id: new ObjectId(userId) },
+    { $set: { profile_description: description } }
+  );
+
+  if (updateUser.matchedCount == 0) {
+    throw "Error in updating profile description";
+  }
+
+  return getAccountById(userId);
 };
