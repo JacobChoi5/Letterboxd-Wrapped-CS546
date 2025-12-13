@@ -142,7 +142,7 @@ export const parse = (csvText) => {
 export const getRating = async (movieId,userId) => 
     {
     // validate both IDs
-    checkValidId(movieId);
+    checkValidString(movieId);
     checkValidId(userId);
     const userMovies = await userMovieData();
 
@@ -163,7 +163,7 @@ export const getRating = async (movieId,userId) =>
 // Ex return "2024-03-14"
 export const getDateWatched = async (movieId, userId)=>
 {
-    checkValidId(movieId);
+    checkValidString(movieId);
     checkValidId(userId);
     const userMovies = await userMovieData();
     const entry = await userMovies.findOne({
@@ -180,7 +180,7 @@ export const getDateWatched = async (movieId, userId)=>
 // Returns how many times the user has rewatched this movie. If we never recorded it, then we basically we assume 0.
 export const getRewatchCount = async (movieId, userId)=>
 {
-    checkValidId(movieId);
+    checkValidString(movieId);
     checkValidId(userId);
     const userMovies = await userMovieData();
     const entry = await userMovies.findOne({
@@ -201,7 +201,7 @@ export const getRewatchCount = async (movieId, userId)=>
 // This will returns the text review the user wrote for this movie. And if they didn’t write a review, returns an empty string.
 export const getReviewDescription = async (movieId, userId)=>
 {
-    checkValidId(movieId);
+    checkValidString(movieId);
     checkValidId(userId);
     const userMovies = await userMovieData();
     const entry = await userMovies.findOne({
@@ -255,7 +255,7 @@ export const getAllMoviesWatched = async(userId) =>
 // This will update the user's rating for this movie if they change it. This will returns whatever the new rating is.
 export const  setRating = async (movieId, userId, val)=>
 {
-    checkValidId(movieId);
+    checkValidString(movieId);
     checkValidId(userId);
     checkValidNumber(val,"Rating");
     if(val < 0 || val > 5)
@@ -281,7 +281,7 @@ export const  setRating = async (movieId, userId, val)=>
 // This is basically Uudating the date the user watched the movie. This returns the updated date.
 export const setDateWatched = async (movieId, userId, val)=>
 {
-    checkValidId(movieId);
+    checkValidString(movieId);
     checkValidId(userId);
     checkValidString(val);
     const userMovies = await userMovieData();
@@ -304,7 +304,7 @@ export const setDateWatched = async (movieId, userId, val)=>
 //This Returns the updated rewatch count.
 export const setRewatchCount = async (movieId, userId, val)=>
 {
-    checkValidId(movieId);
+    checkValcheckValidStringidId(movieId);
     checkValidId(userId);
     checkValidNumber(val);
     let userMovies = await userMovieData();
@@ -333,7 +333,7 @@ export const setRewatchCount = async (movieId, userId, val)=>
 // This will updates the written review the user left for this movie and returns the updated review text.
 export const setReviewDescription = async (movieId, userId, val)=>
 {
-    checkValidId(movieId);
+    checkValidString(movieId);
     checkValidId(userId);
     checkValidString(val);
     const userMovies = await userMovieData();
