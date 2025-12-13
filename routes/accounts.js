@@ -29,7 +29,7 @@ router.route('/follow').post(async (req, res) => {
         helpers.checkValidId(id)
         id = id.trim()
         helpers.checkValidId(id)
-        account = accountData.getAccountById(id)
+        let account = await accountData.getAccountById(id)
     } catch (e) {
         return res.status(400).render('error', {
             errorMessage: 'Invalid input: ' + e,
@@ -82,28 +82,37 @@ router.route('/login').get(async (req, res) => {
 });
 
 router.route('/login').post(async (req, res) => {
-    //add logic for getting username and password
-    let username = ""
-    let password = ""
     try {
-        username = req.body.username
-        password = req.body.password
-        let account = await accountData.getAccountByUsername(username)
-        if (await bcrypt.compare(password, account.password)) {
+        let {username, password} = req.body;
+        if (!username || !password) {
+         throw "Username and password are required";
+        }
+        let accounts = await accountData.getAccountByUsername(username);
+        let account = accounts[0];
+        if(!account || !account.password)
+        {
+            throw "Invalid Creditioals"
+        }
+        if (await bcrypt.compare(password, account.password)) 
+            {
             //my account is account
             //TODO @ Sutej store inside the session as I wasnt doing that befoire. 
             req.session.user = {
                 _id: account._id.toString(),
                 username: account.username
             }
-        } else {
-            throw "invalid credentials"
-        }
+            return res.redirect('/myaccount');
+             } 
+            else
+            {
+            throw "invalid credentials";
+            }
     } catch (e) {
-        return res.status(401).render('error', {
-            errorMessage: 'Username or password does not match: ' + e,
-            class: 'login-fail'
-        })
+        return res.status(401).render('login', 
+            {
+            Title: "Login",
+             error: "Username or password is incorrect"
+            });
     }
 })
 
@@ -144,7 +153,16 @@ router.route('/signupconfirm').post(async (req, res) => {
         const hashedPassword = await bcrypt.hash(accountsignupdata.password, salt);
 
         account = await accountData.createAccount(accountsignupdata.username, hashedPassword, age, false, false, description, [], [], [])
-        return res.json({success: true, message: "Signup successful!"})
+        req.session.user = {
+            _id: account._id.toString(),
+            username: account.username
+        };
+        // return  res.redirect('/myaccount');
+        return res.status(200).json({
+        success: true,
+        message: "Signup successful! Click My Account."
+        });
+        // return res.json({success: true, message: "Signup successful!"})
     } catch (e) {
         console.log("error: " + e)
         return res.status(400).json({
@@ -155,37 +173,22 @@ router.route('/signupconfirm').post(async (req, res) => {
     }
 })
 
-router.route('/myaccount').get( async (req, res) => {
+router.route('/myaccount').get(requireLogin,async (req, res) => {
     let curuser = {}
     try{
-        currentUserId = helpers.checkValidId(req.session.user._id)
+        let currentUserId = req.session.user._id
         helpers.checkValidId(currentUserId)
         currentUserId = currentUserId.trim()
         helpers.checkValidId(currentUserId)
         curuser = await accountData.getAccountById(currentUserId)
+        res.render('myaccount', {
+            Title: "My Account",
+            account: curuser
+        });
     } catch (e) {
         return res.status(401).render('error', {
             errorMessage: 'Invalid credentials: ' + e,
             class: 'login-fail'
-        })
-    }
-    try {
-        req.session.user = {
-        _id: account._id.toString(),
-        username: account.username
-        };
-        if(req.session.user)
-        {
-        res.render('myaccount', { Title: "My Account", account: curuser })
-        }
-        else
-        {
-            res.render('signupconfirm');
-        }
-    } catch (e) {
-        return res.status(500).render('error', {
-            errorMessage: 'Failed to render account page: ' + e,
-            class: 'page-fail'
         })
     }
 })
@@ -213,7 +216,7 @@ router.route('/uploaddata').post(requireLogin,
     }
     try 
     {
-        await accountData.importAllUserData(req.userId, req.file.buffer);
+        await accountData.importAllUserData(req.session.user._id, req.file.buffer);
         return res.render("success", 
             {
             Title: "Data Upload",

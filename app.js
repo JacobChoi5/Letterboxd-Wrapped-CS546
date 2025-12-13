@@ -12,6 +12,7 @@ import cookieParser from 'cookie-parser';
 import { requireLogin } from './middleware.js';
 
 //found multer on npm website when I searched up upload stuff middleware https://www.npmjs.com/package/multer 
+app.use(express.json());
 app.use(express.urlencoded({ extended: true })); 
 
 app.use(cookieParser());
@@ -24,7 +25,6 @@ const handlebarsInstance = exphbs.create({
 app.engine('handlebars', handlebarsInstance.engine);
 app.set('view engine', 'handlebars');
 
-app.use(express.json());
 // What i need to do 
 // middleware cookie handling for checking is users logged in and hwat tjeir user name and id is  and 
 // d file uploads plus extra. how to see which account is signied in.
@@ -45,8 +45,8 @@ app.use((req,res,next) => {
    req.user = req.session.user;
     req.userId = req.session.user._id;
     req.username = req.session.user.username;
-}[]
-console.log("user logged in currently is " + req.user);
+}
+console.log("user logged in currently is " + req.session.user);
 
 next();
 });
