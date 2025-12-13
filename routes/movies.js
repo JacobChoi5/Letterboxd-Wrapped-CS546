@@ -201,6 +201,7 @@ router.route('/:id').get(async (req, res) => {
             class: 'movie-not-found'
         });
     }
+    movie.actors = movie.actors.slice(0,5)
     try {
         res.render('moviebyid', {
             movie: movie,
@@ -212,6 +213,30 @@ router.route('/:id').get(async (req, res) => {
             class: 'page-fail'
         })
     }
+})
+
+router.route('/:id/actors').get(async (req, res) => {
+    try {
+        helpers.checkValidString(req.params.id)
+        req.params.id = xss(req.params.id.trim())
+        helpers.checkValidString(req.params.id)
+    } catch (e) {
+        return res.status(400).render('error', {
+            errorMessage: 'Error in id: ' + e,
+            class: 'invalid-id'
+        });
+    }
+    let movie = {}
+    try {
+        movie = await movieData.getMovieById(req.params.id)
+    } catch (e) {
+        return res.status(404).render('error', {
+            errorMessage: 'Movie Not Found: ' + e,
+            class: 'movie-not-found'
+        });
+    }
+    console.log(movie.actors)
+    return res.json(movie.actors)
 })
 
 router.route('/:id/comment').post(async (req, res) => {
