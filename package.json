@@ -20,6 +20,7 @@
     "express-session": "^1.18.2",
     "jszip": "^3.10.1",
     "mongodb": "^7.0.0",
-    "multer": "^2.0.2"
+    "multer": "^2.0.2",
+    "xss": "^1.0.15"
   }
 }
