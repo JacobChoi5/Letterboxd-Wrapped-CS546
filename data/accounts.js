@@ -24,8 +24,13 @@ export const createAccount = async (
   //valide age
   checkValidAge(age);
 
-  isAdmin = false;
-  isPrivate = false;
+  if (typeof isAdmin != "boolean") {
+    isAdmin = false;
+  }
+
+  if (typeof isPrivate != "boolean") {
+    isPrivate = false;
+  }
 
   if (!profile_description) {
     profile_description = "";
@@ -33,7 +38,7 @@ export const createAccount = async (
     checkValidString(profile_description);
   }
 
-  if (!zip_files) {
+  if (!Array.isArray(zip_files)) {
     zip_files = [];
   }
 
@@ -53,6 +58,15 @@ export const createAccount = async (
   };
 
   const accountCollection = await accounts();
+  //Source: https://www.geeksforgeeks.org/mongodb/mongodb-query-with-case-insensitive-search/
+  const checkUser = await accountCollection.findOne({
+    username: { $regex: `^${username}$`, $options: "i" },
+  });
+
+  if (checkUser) {
+    throw "You may not make an account with a username that has been claimed by another user. Try a different username.";
+  }
+
   const insertInfo = await accountCollection.insertOne(newAccount);
   if (!insertInfo.acknowledged || !insertInfo.insertedId)
     throw "Could not create account. Try again later.";
