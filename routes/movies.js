@@ -19,6 +19,7 @@ router.route('/lookup').get(async (req, res) => {
 router.route('/lookupresults').post(async (req, res) => {
     let name = req.body.name
     let movies = []
+    let cleanMovies = []
     //results of movielookup
     console.log(req.body.name)
     try {
@@ -34,6 +35,17 @@ router.route('/lookupresults').post(async (req, res) => {
     try {
         movies = await movieData.getMoviesByName(name)
         console.log(movies)
+        for (let i in movies) {
+            cleanMovies.push(
+                {
+                    _id: movies[i]._id.toString(),
+                    name: movies[i].name,
+                    date: movies[i].date,
+                    directors: movies[i].directors || ["N/A"]
+                }
+            )
+        }
+        console.log(cleanMovies)
     } catch (e) {
         return res.status(404).render('error', {
             errorMessage: 'Movie Not Found: ' + e,
@@ -41,7 +53,7 @@ router.route('/lookupresults').post(async (req, res) => {
         });
     }
     try {
-        res.render('accountlookupresults', { movies: movies, Title: name + " Results" })
+        res.render('lookupresults', { movies: cleanMovies, Title: name + " Results" })
     } catch (e) {
         return res.status(500).render('error', {
             errorMessage: `We're sorry, but no results were found for ${name}`,
@@ -64,7 +76,7 @@ router.route('/newmovie').get(async (req, res) => {
 })
 
 router.route('/moviecreated').post(async (req, res) => {
-    data = req.body
+    let data = req.body
 
     let name = ""
     let date = NaN
@@ -201,7 +213,7 @@ router.route('/:id').get(async (req, res) => {
             class: 'movie-not-found'
         });
     }
-    movie.actors = movie.actors.slice(0,5)
+    movie.actors = movie.actors.slice(0, 5)
     try {
         res.render('moviebyid', {
             movie: movie,
@@ -261,20 +273,18 @@ router.route('/:id/comment').post(async (req, res) => {
         });
     }
     try {
-        if (req.body.supercomment) 
-        {
-            await movieData.createComment(  req.params.id, 
-                                            req.session.user._id,
-                                            req.session.user.username, 
-                                            req.body.text,
-                                            req.body.supercomment)
+        if (req.body.supercomment) {
+            await movieData.createComment(req.params.id,
+                req.session.user._id,
+                req.session.user.username,
+                req.body.text,
+                req.body.supercomment)
         }
-        else   
-        {
-            await movieData.createComment(  req.params.id, 
-                                            req.session.user._id,
-                                            req.session.user.username, 
-                                            req.body.text)
+        else {
+            await movieData.createComment(req.params.id,
+                req.session.user._id,
+                req.session.user.username,
+                req.body.text)
         }
     } catch (e) {
         return res.status(500).render('error', {

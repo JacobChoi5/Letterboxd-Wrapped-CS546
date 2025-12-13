@@ -2,10 +2,10 @@
     <li><a href="/uploaddata">Upload Data</a></li>
     <form id="updateinfoform">
         <label>Age</label>
-        <input type="text" name="age" id="age" placeholder="{{age}}">
+        <input type="number" name="age" id="age" value="{{account.age}}">
 
         <label>Description</label>
-        <input type="text" name="description" id="description" placeholder="{{description}}">
+        <input type="text" name="description" id="description" value="{{account.profile_description}}">
 
         <button type"update">Update</button>
     </form>
