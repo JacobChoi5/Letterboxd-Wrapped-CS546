@@ -7,9 +7,8 @@
         <button type="submit">♥</button>
     </form>
 <p>Reply:</p>
-    <form action="/movies/{{@root.movie._id}}/comment" method="POST">
-        <input type="text" name="text">    
-        <input type="hidden" name="supercomment" value="{{_id}}">
+    <form class = "replyForm" data-supercomment-id = "{{_id}}">
+        <input type="text" name="text">
         <button type="submit">Add Comment</button>
     </form>
 {{#if subcomments}}
