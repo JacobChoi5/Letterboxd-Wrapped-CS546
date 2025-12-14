@@ -3,7 +3,7 @@ const router = Router()
 import * as helpers from "../helpers.js"
 import * as movieData from '../data/movies.js'
 import * as usersMovieData from '../data/usersMovieData.js'
-import { requireLogin } from "../middleware.js"
+import { requireLogin, requireLogout } from "../middleware.js"
 import * as accountData from '../data/accounts.js'
 import bcrypt from 'bcrypt'
 import multer from 'multer';
@@ -59,7 +59,7 @@ router.route('/follow').post(async (req, res) => {
     }
 })
 
-router.route('/createaccount').get(async (req, res) => {
+router.route('/createaccount').get(requireLogout, async (req, res) => {
     try {
         res.render('signup', { Title: "Signup" })
     } catch (e) {
@@ -70,7 +70,7 @@ router.route('/createaccount').get(async (req, res) => {
     }
 })
 
-router.route('/login').get(async (req, res) => {
+router.route('/login').get(requireLogout, async (req, res) => {
     try {
         res.render('login', { Title: "Login" })
     } catch (e) {
@@ -81,7 +81,7 @@ router.route('/login').get(async (req, res) => {
     }
 });
 
-router.route('/login').post(async (req, res) => {
+router.route('/login').post(requireLogout, async (req, res) => {
     try {
         let { username, password } = req.body;
         if (!username || !password) {
@@ -112,6 +112,18 @@ router.route('/login').post(async (req, res) => {
             });
     }
 })
+
+router.route('/logout').post(async (req, res) => {
+    req.session.destroy()
+    try {
+        res.render('login', { Title: "Login" })
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Failed to render home page: ' + e,
+            class: 'page-fail'
+        })
+    }
+});
 
 router.route('/signupconfirm').post(upload.single('file'),async (req, res) => {
     const accountsignupdata = req.body

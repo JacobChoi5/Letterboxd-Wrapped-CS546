@@ -1,7 +1,9 @@
 (function ($) {
     const inputForm = document.getElementById('signupform');
+    const errorDiv = document.getElementById("error")
     if (inputForm) {
         inputForm.addEventListener('submit', (event) => {
+            errorDiv.replaceChildren()
             event.preventDefault()
             let username = document.getElementById("username").value
             let password = document.getElementById("password").value
@@ -30,30 +32,21 @@
                 //errorTextElement.textContent = e;
                 let p = document.createElement("p")
                 p.textContent = "invalid input"
-                const errorDiv = document.getElementById("error")
                 errorDiv.appendChild(p)
                 return
             }
 
-           const formData = new FormData(inputForm);
-
-$.ajax({
-    method: 'POST',
-    url: '/signupconfirm',
-    data: formData,
-    processData: false,
-    contentType: false
-}).then(function (responseMessage) {
-    console.log(responseMessage)
-    if (responseMessage.success) {
-        inputForm.replaceWith(`${responseMessage.message}`)
-    } else {
-        let p = document.createElement("p")
-        p.textContent = `Error: ${responseMessage.message}`
-        const errorDiv = document.getElementById("error")
-        errorDiv.appendChild(p)
-    }
-});
+            let requestConfig = {
+                method: 'POST',
+                url: '/signupconfirm',   // your Express route
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    username: username,
+                    password: password,
+                    age: age,
+                    description: description
+                })
+            }
 
             $.ajax(requestConfig).then(function (responseMessage) {
                 console.log(responseMessage)
@@ -61,7 +54,6 @@ $.ajax({
 
             }, function (errorMessage) {
                 console.log(errorMessage.message)
-                //update error div with error message
                 let p = document.createElement("p")
                 p.textContent = `Error in creating account. Username my already be taken.`
                 const errorDiv = document.getElementById("error")
