@@ -83,10 +83,15 @@ export const createStatsObject = async (id) => {
   return statistics_object;
 };
 
+/* Issues: allegedly the zip_files parameter is never anything but empty. jacob may be calling calcstats 
+right when the user logs in. but if there are no zip files uploaded, then it would error */
 export const calculateStatistics = async (id, period) => {
   // all, year, month
-  let account = await getAccountById(id);
-  await importAllUserData(id, account["zip_files"]);
+
+  //movie data is in the userMovieData Collection
+
+  checkValidId(id);
+  checkValidString(period);
 
   let movies_watched = await csvData.getAllMoviesWatched(id);
   if (!movies_watched) throw "Could not get all movies";
