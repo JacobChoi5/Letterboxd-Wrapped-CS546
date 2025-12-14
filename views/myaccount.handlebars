@@ -1,11 +1,12 @@
 <main>
-    <li><a href="/uploaddata">Upload Data</a></li>
+    <h2>Username: {{username}}</h2>
+    <a href="/uploaddata">Upload Data</a>
     <form id="updateinfoform">
         <label>Age</label>
-        <input type="number" name="age" id="age" value="{{account.age}}">
+        <input type="number" name="age" id="age" value="{{age}}">
 
         <label>Description</label>
-        <input type="text" name="description" id="description" value="{{account.profile_description}}">
+        <input type="text" name="description" id="description" value="{{profile_description}}">
 
         <button type"update">Update</button>
     </form>
