@@ -419,10 +419,12 @@ export const getMoviesByYear = async (year) => {
   return movieCollection.find({ date: year }).toArray();
 };
 
+//Source (same as in accounts.js): https://www.geeksforgeeks.org/mongodb/mongodb-query-with-case-insensitive-search/
 export const getMoviesByName = async (name) => {
   helpers.checkValidString(name, "Name");
   const movieCollection = await movies();
-  return movieCollection.find({ names: name.trim() }).toArray();
+  name = name.trim()
+  return movieCollection.find({ name: { $regex: `^${name}$`, $options: "i" } }).toArray();
 };
 
 export const getMoviesByPopularity = async (popularity) => {
