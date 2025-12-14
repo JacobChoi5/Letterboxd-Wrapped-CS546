@@ -1,0 +1,69 @@
+<main>
+    <form action="/movies/{{movie._id}}/editmovie" method="POST" class="new-movie-form">
+
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" value="{{movie.name}}">
+
+        <label for="posterUrl">Poster URL</label>
+        <input type="url" id="posterUrl" name="posterUrl" value="{{movie.posterUrl}}">
+
+        <label for="date">Release Year</label>
+        <input type="number" id="date" name="date" min="1800" max="2100" required value="{{movie.date}}">
+
+        <label for="tagline">Tagline</label>
+        <input type="text" id="tagline" name="tagline" placeholder="Optional tagline" value="{{movie.tagline}}">
+
+        <label for="description">Description</label>
+        <textarea id="description" name="description"
+            placeholder="Short movie description">{{movie.description}}</textarea>
+
+        <label for="minute">Length (minutes)</label>
+        <input type="number" id="minute" name="minute" min="1" required value="{{movie.minute}}">
+
+        <label for="rating">Rating (0-5)</label>
+        <input type="number" id="rating" name="rating" min="1" max="5" step="0.01" required value="{{movie.rating}}">
+
+        <input type="submit" value="Submit">
+
+    </form>
+
+    <p>Directors:</p>
+    {{#each movie.directors}}
+    <p>{{this}}</p>
+    {{/each}}
+
+    <p>Actors:</p>
+    <ul id="actors">
+        {{#each movie.actors}}
+        <li>{{this.name}} as {{this.role}}</li>
+        {{/each}}
+    </ul>
+
+    <button type="button" id="actorsButton" data-movie-id="{{movie._id}}">See All</button>
+
+    <p>Genres:</p>
+    <ul>
+        {{#each movie.genres}}
+        <li>{{this}}</li>
+        {{/each}}
+    </ul>
+
+    <p>Themes:</p>
+    <ul>
+        {{#each movie.themes}}
+        <li>{{this}}</li>
+        {{/each}}
+    </ul>
+
+    <p>Studios:</p>
+    <ul>
+        {{#each movie.studios}}
+        <li>{{this}}</li>
+        {{/each}}
+    </ul>
+
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"
+        integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+    <script src="/js/actors.js"></script>
+
+</main>

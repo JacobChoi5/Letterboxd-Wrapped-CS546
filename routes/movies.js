@@ -83,7 +83,7 @@ router.route('/moviecreated').post(async (req, res) => {
     let date = NaN
     let tagline = "N/A"
     let description = "N/A"
-    let posterurl = "public/assets/no_image-1.jpeg"
+    let posterUrl = "/assets/no_image-1.jpeg"
     let directors = ["N/A"]
     let genres = ["N/A"]
     let themes = ["N/A"]
@@ -95,8 +95,8 @@ router.route('/moviecreated').post(async (req, res) => {
         name = xss(data.name.trim())
         helpers.checkValidString(name)
 
-        helpers.checkValidNumber(data.date)
-        date = data.date
+        date = Number(data.date)    
+        helpers.checkValidNumber(date)
 
         if (data.tagline) {
             helpers.checkValidString(data.tagline)
@@ -110,16 +110,16 @@ router.route('/moviecreated').post(async (req, res) => {
             helpers.checkValidString(description)
         }
 
-        helpers.checkValidNumber(data.minute)
-        minute = data.minute
+        minute = Number(data.minute)
+        helpers.checkValidNumber(minute, "minute")
+        
+        rating = Number(data.rating)
+        helpers.checkValidNumber(rating, "rating")
 
-        helpers.checkValidNumber(data.rating)
-        rating = data.rating
-
-        if (data.posterurl) {
-            helpers.checkValidString(data.posterurl)
-            posterurl = xss(data.posterurl.trim())
-            helpers.checkValidString(posterurl)
+        if (data.posterUrl) {
+            helpers.checkValidString(data.posterUrl)
+            posterUrl = xss(data.posterUrl.trim())
+            helpers.checkValidString(posterUrl)
         }
 
         if (data.directors) {
@@ -173,7 +173,7 @@ router.route('/moviecreated').post(async (req, res) => {
         }
 
         await movieData.createNewMovie(
-            name, date, tagline, description, minute, rating, directors, actors, genres, posterurl, themes, studios
+            name, date, tagline, description, minute, rating, directors, actors, genres, posterUrl, themes, studios
         )
 
     } catch (e) {
@@ -397,7 +397,7 @@ router.route('/:id/admin').get(requireLogin, async (req, res) => {
         helpers.checkValidId(currentUserId)
         currentUserId = currentUserId.trim()
         helpers.checkValidId(currentUserId)
-        curuser = await accountData.getAccountById(currentUserId)
+        let curuser = await accountData.getAccountById(currentUserId)
         if (!curuser.isAdmin) throw "not authorized"
     } catch (e) {
         return res.status(403).render('error', {
@@ -423,6 +423,93 @@ router.route('/:id/admin').get(requireLogin, async (req, res) => {
     } catch (e) {
         return res.status(500).render('error', {
             errorMessage: 'Failed to render movie page: ' + e,
+            class: 'page-fail'
+        })
+    }
+})
+
+router.route('/:id/editmovie').post(requireLogin, async (req, res) => {
+    let data = req.body
+    let movieId = req.params.id
+
+    let name = ""
+    let date = NaN
+    let tagline = "N/A"
+    let description = "N/A"
+    let posterUrl = "/assets/no_image-1.jpeg"
+    let minute = NaN
+    let rating = NaN
+
+    try {
+        helpers.checkValidId(movieId, "id")
+        movieId = xss(movieId.trim())
+        helpers.checkValidId(movieId)
+
+        helpers.checkValidString(data.name, "name")
+        name = xss(data.name.trim())
+        helpers.checkValidString(name)
+
+        date = Number(data.date)
+        helpers.checkValidNumber(date, "date")
+
+        if (data.tagline) {
+            helpers.checkValidString(data.tagline, "tagline")
+            tagline = xss(data.tagline.trim())
+            helpers.checkValidString(tagline)
+        }
+
+        if (data.description) {
+            helpers.checkValidString(data.description, "description")
+            description = xss(data.description.trim())
+            helpers.checkValidString(description)
+        }
+
+        minute = Number(data.minute)
+        helpers.checkValidNumber(minute, "minute")
+        
+        rating = Number(data.rating)
+        helpers.checkValidNumber(rating, "rating")
+        
+        if (data.posterUrl) {
+            helpers.checkValidString(data.posterUrl, "poster")
+            posterUrl = xss(data.posterUrl.trim())
+            helpers.checkValidString(posterUrl)
+        }
+
+        let movie = await movieData.getMovieById(movieId)
+
+        await movieData.updateMovie(
+            movieId,
+            movie.popularity,
+            name,
+            date,
+            tagline,
+            description,
+            minute,
+            rating,
+            movie.directors,
+            movie.actors,
+            movie.genres,
+            posterUrl,
+            movie.themes,
+            movie.studios
+        )
+
+    } catch (e) {
+        return res.status(400).render('error', {
+            errorMessage: 'Invalid input data: ' + e,
+            class: 'error'
+        })
+    }
+
+    try {
+        res.render('success', {
+            Title: "Movie Updated",
+            successMessage: `${name} Updated Successfully`
+        })
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Failed to render update success page: ' + e,
             class: 'page-fail'
         })
     }
