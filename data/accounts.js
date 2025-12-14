@@ -463,7 +463,7 @@ export const importAllUserData = async (userId, zipBuffer) => {
     const movieName = row["Name"].trim();
     const year = Number(row["Year"]);
 
-    const foundMovie = await movieData.findMovieByNameAndYear(movieName, year);
+    const foundMovie = await movieData.findMovie(movieName, year);
     if (!foundMovie) {
       continue;
     }
@@ -515,7 +515,7 @@ export const importAllUserData = async (userId, zipBuffer) => {
     const year = Number(row["Year"]);
     const rating = Number(row["Rating"]);
 
-    const foundMovie = await movieData.findMovieByNameAndYear(movieName, year);
+    const foundMovie = await movieData.findMovie(movieName, year);
     if (!foundMovie) {
       continue;
     }
@@ -538,7 +538,7 @@ export const importAllUserData = async (userId, zipBuffer) => {
     const year = Number(row["Year"]);
     const reviewDescription = row["Review"].trim();
 
-    const foundMovie = await movieData.findMovieByNameAndYear(movieName, year);
+    const foundMovie = await movieData.findMovie(movieName, year);
     if (!foundMovie) {
       continue;
     }
