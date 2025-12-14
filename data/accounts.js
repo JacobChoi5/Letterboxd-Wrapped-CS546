@@ -435,7 +435,7 @@ export const importAllUserData = async (userId, zipBuffer) => {
 
   const user = await accountCol.findOne({ _id: new ObjectId(userId) });
   if (!user) {
-    throw new Error("User not found.");
+    throw "User not found.";
   }
 
   const extracted = await csvData.unZip(zipBuffer);
@@ -445,7 +445,7 @@ export const importAllUserData = async (userId, zipBuffer) => {
   const reviewsCSV = extracted.reviewsCSV;
 
   if (!diaryCSV) {
-    throw new Error("ZIP file did not contain diary.csv.");
+    throw "ZIP file did not contain diary.csv.";
   }
 
   let diaryRows = [];
@@ -473,12 +473,12 @@ export const importAllUserData = async (userId, zipBuffer) => {
     const movieName = row["Name"].trim();
     const year = Number(row["Year"]);
 
-    const foundMovie = await movieData.findMovie(movieName, year);
-    if (!foundMovie) {
-      continue;
-    }
+    let foundMovie = await movieData.findMovie(movieName, year);
 
-    const movieId = foundMovie._id;
+    let movieId = null;
+    if (foundMovie) {
+      movieId = foundMovie._id;
+    }
 
     let dateWatched = "";
     if (row["Date"]) {
@@ -492,23 +492,26 @@ export const importAllUserData = async (userId, zipBuffer) => {
 
     const existing = await movieCol.findOne({
       userId: new ObjectId(userId),
-      movieId: movieId
+      movieName: movieName,
+      year: year
     });
 
     if (existing) {
       await movieCol.updateOne(
-        { userId: new ObjectId(userId), movieId: movieId },
-        { $set: { movieName: movieName, dateWatched: dateWatched, rewatchCount: rewatchCount } }
+        { userId: new ObjectId(userId), movieName: movieName, year: year },
+        { $set: { dateWatched: dateWatched, rewatchCount: rewatchCount } }
       );
     } else {
       await movieCol.insertOne({
         userId: new ObjectId(userId),
         movieId: movieId,
         movieName: movieName,
+        year: year,
         dateWatched: dateWatched,
         rating: null,
         rewatchCount: rewatchCount,
-        reviewDescription: ""
+        reviewDescription: "",
+        external: movieId === null
       });
     }
   }
@@ -525,13 +528,8 @@ export const importAllUserData = async (userId, zipBuffer) => {
     const year = Number(row["Year"]);
     const rating = Number(row["Rating"]);
 
-    const foundMovie = await movieData.findMovie(movieName, year);
-    if (!foundMovie) {
-      continue;
-    }
-
     await movieCol.updateOne(
-      { userId: new ObjectId(userId), movieId: foundMovie._id },
+      { userId: new ObjectId(userId), movieName: movieName, year: year },
       { $set: { rating: rating } }
     );
   }
@@ -548,19 +546,15 @@ export const importAllUserData = async (userId, zipBuffer) => {
     const year = Number(row["Year"]);
     const reviewDescription = row["Review"].trim();
 
-    const foundMovie = await movieData.findMovie(movieName, year);
-    if (!foundMovie) {
-      continue;
-    }
-//Fixed
     await movieCol.updateOne(
-      { userId: new ObjectId(userId), movieId: foundMovie._id },
+      { userId: new ObjectId(userId), movieName: movieName, year: year },
       { $set: { reviewDescription: reviewDescription } }
     );
   }
 
   return "Import finished";
 };
+
 
 
 export const getAllAccounts = async () => {

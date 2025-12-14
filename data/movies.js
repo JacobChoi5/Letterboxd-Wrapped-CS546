@@ -433,12 +433,23 @@ export const getMoviesByPopularity = async (popularity) => {
   return movieCollection.findOne({ popularity });
 };
 
+//got this regex from google 
+const normalize = (str) => {
+  return str.toLowerCase().replace(/[:’'".,!?()-]/g, "")  
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
 export const findMovie = async (name, year) => {
   helpers.checkValidString(name, "Name");
   helpers.checkValidNumber(year, "Year");
-  let movies = await getMoviesByName(name);
+
+  const movieCollection = await movies();
+  name = name.trim()
+  let moviesList = await movieCollection.find({name: name.trim()}).toArray();
+
   let output = null;
-  for (let movie of movies)
+  for (let movie of moviesList)
   {
     if (movie.date === year)
     {
@@ -448,6 +459,22 @@ export const findMovie = async (name, year) => {
   }
   return output
 };
+
+// export const findMovie = async (name, year) => {
+//   helpers.checkValidString(name);
+//   helpers.checkValidNumber(year);
+
+//   const movieCollection = await movies();
+//   name = name.trim()
+//   let movies = movieCollection.find(name).toArray();
+
+//   for (let movie of movies) {
+//     if (movie.date === year) {
+//       return movie;
+//     }
+//   }
+//   return null;
+// };
 
 //super comment is for when a comment is made under another comment rather than just on the movie
 export const createComment = async (
