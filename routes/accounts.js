@@ -113,7 +113,7 @@ router.route('/login').post(async (req, res) => {
     }
 })
 
-router.route('/signupconfirm').post(async (req, res) => {
+router.route('/signupconfirm').post(upload.single('file'),async (req, res) => {
     const accountsignupdata = req.body
     let account = {}
     let age = 0
@@ -143,15 +143,22 @@ router.route('/signupconfirm').post(async (req, res) => {
         const hashedPassword = await bcrypt.hash(accountsignupdata.password, salt);
 
         account = await accountData.createAccount(accountsignupdata.username, hashedPassword, age, false, false, description, [], [], [])
-        req.session.user = {
-            _id: account._id.toString(),
-            username: account.username
-        };
-        // return  res.redirect('/myaccount');
-        return res.status(200).json({
-            success: true,
-            message: "Signup successful! Click My Account."
-        });
+        if (req.file) {
+    await accountData.importAllUserData(
+        account._id.toString(),
+        req.file.buffer
+    );
+}
+
+req.session.user = {
+    _id: account._id.toString(),
+    username: account.username
+};
+
+return res.status(200).json({
+    success: true,
+    message: "Signup successful! Click My Account."
+});
         // return res.json({success: true, message: "Signup successful!"})
     } catch (e) {
         console.log("error: " + e)
@@ -185,6 +192,7 @@ router.route('/myaccount').get(requireLogin, async (req, res) => {
         })
     }
 })
+
 
 router.route('/updatemyccount').post(requireLogin, async (req, res) => {
     let curuser = {}

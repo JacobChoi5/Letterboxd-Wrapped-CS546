@@ -107,7 +107,6 @@ ol li a:hover {
   text-decoration: underline;
 }
 
-/* Movie details container */
 .movie-details {
   background: #ffffff;
   padding: 20px;
@@ -116,21 +115,18 @@ ol li a:hover {
   margin-top: 20px;
 }
 
-/* Labels like "Directors:", "Genres:", etc. */
 .movie-details p {
   margin: 6px 0;
   font-size: 1rem;
   color: #333;
 }
 
-/* The section header lines (like "Directors:", "Genres:") */
 .movie-details .section-title {
   font-weight: bold;
   margin-top: 12px;
-  color: #900; /* deep red, not too intense */
+  color: #900; 
 }
 
-/* Images */
 .movie-details img {
   margin-top: 15px;
   max-width: 250px;
