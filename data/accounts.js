@@ -423,7 +423,6 @@ export const calculateStatistics = async (id, period) => {
   return statistics;
 };
 
-
 // This basically imports the user’s Letterboxd ZIP, and merges it into their movie data in MongoDB or adds it for the first time,
 // and makes all profile  or refreshes it. This is what creates the data that our
 // getters/setters later read and update within calculateStatistics().
@@ -492,13 +491,19 @@ export const importAllUserData = async (userId, zipBuffer) => {
 
     const existing = await movieCol.findOne({
       userId: new ObjectId(userId),
-      movieId: movieId
+      movieId: movieId,
     });
 
     if (existing) {
       await movieCol.updateOne(
         { userId: new ObjectId(userId), movieId: movieId },
-        { $set: { movieName: movieName, dateWatched: dateWatched, rewatchCount: rewatchCount } }
+        {
+          $set: {
+            movieName: movieName,
+            dateWatched: dateWatched,
+            rewatchCount: rewatchCount,
+          },
+        }
       );
     } else {
       await movieCol.insertOne({
@@ -508,7 +513,7 @@ export const importAllUserData = async (userId, zipBuffer) => {
         dateWatched: dateWatched,
         rating: null,
         rewatchCount: rewatchCount,
-        reviewDescription: ""
+        reviewDescription: "",
       });
     }
   }
@@ -561,7 +566,6 @@ export const importAllUserData = async (userId, zipBuffer) => {
 
   return "Import finished";
 };
-
 
 export const getAllAccounts = async () => {
   const accountCollection = await accounts();
