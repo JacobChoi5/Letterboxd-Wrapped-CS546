@@ -1,15 +1,37 @@
 # CS546_Letterboxd_Analyzer
+## Features
+### Core
+- Users can upload their .zip file from Letterboxd to load their data
+- Users can reupload their .zip file to update their data
+- An admin account that allows the admin to add movies to the system, edit existing movies, and delete movies from the system.
+- Letterboxd Wrapped would display movie statistics:
+- Top genres
+- Top directors
+- Top actors
+- Average movie rating
+- Average difference between the user’s rating and global movie averages
+- The number of hours spent watching movies
+- Can calculate based on all-time data, the past year, or month.
+- Recommendation based on top genres, directors, and actors
+- Each time a user updates their data, it will save all of the movies watched during that period since the last update. It will serve as a time capsule for that period.
+- Users can manually find movies from our database and input/update their rating data
+- Commenting on the movie pages to interact with other users
+- Integration with movie posters from Letterboxd.
+- Allows users to follow other users
+- Users have a public profile page where users can compare their statistics with other users (top movies, genres, hours spent watching).
+### Extra
+- Private and public profiles
 ## Usage
-## Seeding
+### Seeding
 `npm run seed` to seed database and admin account
 This is the only way to create an admin account, credentials:
 Username: admin
 Password: admin
 
-## Starting Server
+### Starting Server
 `npm start` to run app.js, will run rest of files
 
-## Example Run
+### Example Run
 From /createaccount (linked from all pages) sign up as a new account:
 
 Parameters:
