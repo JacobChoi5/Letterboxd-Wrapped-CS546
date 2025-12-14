@@ -1,5 +1,5 @@
 <main>
-    <form action="/movies/{{movie._id}}/editmovie" method="POST" class="new-movie-form">
+    <form action="/movies/{{movie._id}}/editmovie" method="POST" class="edit-movie-form">
 
         <label for="name">Name</label>
         <input type="text" id="name" name="name" value="{{movie.name}}">
@@ -23,8 +23,12 @@
         <label for="rating">Rating (0-5)</label>
         <input type="number" id="rating" name="rating" min="1" max="5" step="0.01" required value="{{movie.rating}}">
 
-        <input type="submit" value="Submit">
+        <button type="submit">Submit</button>
 
+    </form>
+
+    <form action="/movies/{{movie._id}}/deletemovie" method="POST" class="delete-movie-form">
+        <button type="submit">Delete Movie</button>
     </form>
 
     <p>Directors:</p>
