@@ -8,22 +8,10 @@ import { ObjectId } from "mongodb";
 import { userMovieData } from "../config/mongoCollections.js";
 import JSZip from "jszip";
 
-// This take s the raw ZIP file the user uploads and opens it.
-// Inside the ZIP, we need the  three files
-// diary.csv, ratings.csv reviews.csv
-// This function pulls each one out and returns the *text* inside them.
-// We don’t parse anything here  we are extracting the files from the zip.
-// ex return object:
-//     {
-//         diaryCSV:   "...csv text...",
-//         ratingsCSV: "...csv text...",
-//         reviewsCSV: "...csv text..."
-//     }
-// After this step, the caller will pass each CSV into parse() function.
+
 export const unZip = async (zipBuffer) => {
   const zip = await JSZip.loadAsync(zipBuffer);
-
-  // Helper to pull a single file out of the zip
+//learned how to use jzip from google as wasn't sure how to unzip with current node
   const getFileText = async (fileName) => {
     const file = zip.file(fileName);
     if (!file) {
@@ -32,8 +20,6 @@ export const unZip = async (zipBuffer) => {
     return await file.async("string");
   };
 
-  // I’m splitting everything into separate variables
-  // so it's easier to debug and follow.
   const diaryCSV = await getFileText("diary.csv");
   const ratingsCSV = await getFileText("ratings.csv");
   const reviewsCSV = await getFileText("reviews.csv");
@@ -45,18 +31,7 @@ export const unZip = async (zipBuffer) => {
   };
 };
 
-// This turns a CSV file as a big string into a list of objects and so  each object represents one line/row from the CSV.
-// ex the csv has
-//         Movie,Rating
-//         Inception,5
-//         Dune,4
-// then parse() will return
-//     [
-//         { Movie: "Inception", Rating: "5" },
-//         { Movie: "Dune",      Rating: "4" }
-//     ]
-// This makes it way easier for us to work with the CSV when inserting
-// things into our database otherwise its a horrible issue.
+
 export const parse = (csvText) => {
   if (!csvText) {
     return [];
@@ -67,7 +42,6 @@ export const parse = (csvText) => {
     return [];
   }
 
-  // parse headers
   const firstLine = lines[0];
   const headers = [];
   let curr = "";
@@ -121,18 +95,15 @@ export const parse = (csvText) => {
   return rows;
 };
 
-//  Returns the rating that this specfic user gave to this movie.
-// it is used when showing a user their movie list
-// Also lucas you need everyone’s ratings to compute averages
+
 export const getRating = async (movieId, userId) => {
-  // validate both IDs
   checkValidId(movieId);
   checkValidId(userId);
   const userMovies = await userMovieData();
 
   const entry = await userMovies.findOne({
-    userId: userId,
-    movieId: movieId,
+    userId: new ObjectId(userId),
+    movieId: new ObjectId(movieId),
   });
 
   if (!entry) {
@@ -142,10 +113,9 @@ export const getRating = async (movieId, userId) => {
   return entry.rating;
 };
 
-// Returns the date the user originally watched the movie.
-// Ex return "2024-03-14"
+
 export const getDateWatched = async (movieId, userId) => {
-  checkValidString(movieId);
+  checkValidId(movieId);
   checkValidId(userId);
   const userMovies = await userMovieData();
   const entry = await userMovies.findOne({
@@ -158,9 +128,8 @@ export const getDateWatched = async (movieId, userId) => {
   return entry.dateWatched;
 };
 
-// Returns how many times the user has rewatched this movie. If we never recorded it, then we basically we assume 0.
 export const getRewatchCount = async (movieId, userId) => {
-  checkValidString(movieId);
+  checkValidId(movieId);
   checkValidId(userId);
   const userMovies = await userMovieData();
   const entry = await userMovies.findOne({
@@ -176,9 +145,8 @@ export const getRewatchCount = async (movieId, userId) => {
   return entry.rewatchCount;
 };
 
-// This will returns the text review the user wrote for this movie. And if they didn’t write a review, returns an empty string.
 export const getReviewDescription = async (movieId, userId) => {
-  checkValidString(movieId);
+  checkValidId(movieId);
   checkValidId(userId);
   const userMovies = await userMovieData();
   const entry = await userMovies.findOne({
@@ -194,19 +162,7 @@ export const getReviewDescription = async (movieId, userId) => {
   return entry.reviewDescription;
 };
 
-// This returns a list of all movies this user has in our database.
-// Each entry/piece looks something like:
-//     {
-//         userId: "abc123",
-//         movieId: "550",
-//         movieName: "Name"
-//         rating: 5,
-//         dateWatched: "2024-01-01",
-//         rewatchCount: 2,
-//         reviewDescription: "Amazing movie!"
-//     }
-// Lucas you will  will loop through this to compute things like:
-// average rating, the total movies watched and watch statistics
+
 export const getAllMoviesWatched = async (userId) => {
   checkValidId(userId, "userId");
   const userMovies = await userMovieData();
@@ -220,16 +176,9 @@ export const getAllMoviesWatched = async (userId) => {
   }
   return entry;
 };
-// More Info Lucas, this returns an array of all movie records this user has in the database.
-// Each object includes movieName,movieId, rating, dateWatched, reviewDescription, etc.
-// Other files (like accounts.js) will loop through this to compute stats
-// such as total movies watched, total rewatches, average rating, and the rest of stuff. In accounts.js, lucas, you  can do  this
-//const movies = await getAllMoviesWatched(userId);
-//const totalMovies = movies.length; or something like that
 
-// This will update the user's rating for this movie if they change it. This will returns whatever the new rating is.
 export const setRating = async (movieId, userId, val) => {
-  checkValidString(movieId);
+  checkValidId(movieId);
   checkValidId(userId, "userId");
   checkValidNumber(val, "Rating");
   if (val < 0 || val > 5) {
@@ -244,15 +193,14 @@ export const setRating = async (movieId, userId, val) => {
   if (!entry.value) {
     throw "No User Movie data found";
   }
-  if (!entry.value.rating) {
+  if (entry.value.rating === null || entry.value.rating === undefined) {
     throw "No rating found";
   }
   return entry.value.rating;
 };
 
-// This is basically Uudating the date the user watched the movie. This returns the updated date.
 export const setDateWatched = async (movieId, userId, val) => {
-  checkValidString(movieId, "movieId");
+  checkValidId(movieId, "movieId");
   checkValidId(userId, "userID");
   checkValidString(val, "val");
   const userMovies = await userMovieData();
@@ -270,10 +218,9 @@ export const setDateWatched = async (movieId, userId, val) => {
   return entry.value.dateWatched;
 };
 
-// This will update how many times the user has rewatched the movie. THis is used when a user manually edits their movie details.
-//This Returns the updated rewatch count.
+
 export const setRewatchCount = async (movieId, userId, val) => {
-  checkValcheckValidStringidId(movieId);
+  checkValidId(movieId);
   checkValidId(userId);
   checkValidNumber(val);
   let userMovies = await userMovieData();
@@ -298,9 +245,8 @@ export const setRewatchCount = async (movieId, userId, val) => {
   return entry.value.rewatchCount;
 };
 
-// This will updates the written review the user left for this movie and returns the updated review text.
 export const setReviewDescription = async (movieId, userId, val) => {
-  checkValidString(movieId);
+  checkValidId(movieId);
   checkValidId(userId);
   checkValidString(val);
   const userMovies = await userMovieData();
