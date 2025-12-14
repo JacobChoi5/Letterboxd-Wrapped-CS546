@@ -361,7 +361,7 @@ export const updateMovie = async (
 };
 
 export const deleteMovie = async (id) => {
-  checkValidId(id, "id");
+  helpers.checkValidId(id, "id");
   let movieCollection = await movies();
   let findMovie = await movieCollection.findOne({
     _id: new ObjectId(id),
@@ -371,7 +371,7 @@ export const deleteMovie = async (id) => {
     throw "movie with that id could not be found";
   }
 
-  const deletionInfo = await accountCollection.deleteOne({
+  const deletionInfo = await movieCollection.deleteOne({
     _id: new ObjectId(id),
   });
 
@@ -431,6 +431,22 @@ export const getMoviesByPopularity = async (popularity) => {
   helpers.checkValidString(popularity, "Popularity");
   const movieCollection = await movies();
   return movieCollection.findOne({ popularity });
+};
+
+export const findMovie = async (name, year) => {
+  helpers.checkValidString(name, "Name");
+  helpers.checkValidNumber(year, "Year");
+  let movies = await getMoviesByName(name);
+  let output = null;
+  for (let movie of movies)
+  {
+    if (movie.date === year)
+    {
+      output = movie;
+      break;
+    }
+  }
+  return output
 };
 
 //super comment is for when a comment is made under another comment rather than just on the movie
