@@ -7,9 +7,11 @@
     <p>Rating: {{movie.rating}}</p>
 
     <p>Directors:</p>
-    {{#each movie.directors}}
-    <p>{{this}}</p>
-    {{/each}}
+    <ul id="directors">
+        {{#each movie.directors}}
+        <li>{{this}}</li>
+        {{/each}}
+    </ul>
 
     <p>Actors:</p>
     <ul id="actors">
