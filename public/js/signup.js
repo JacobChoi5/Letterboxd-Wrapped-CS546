@@ -1,9 +1,10 @@
 (function ($) {
     const inputForm = document.getElementById('signupform');
+    const errorDiv = document.getElementById("error")
     if (inputForm) {
         inputForm.addEventListener('submit', (event) => {
+            errorDiv.replaceChildren()
             event.preventDefault()
-            console.log("in client side code")
             let username = document.getElementById("username").value
             let password = document.getElementById("password").value
             let cpassword = document.getElementById("cpassword").value
@@ -31,7 +32,6 @@
                 //errorTextElement.textContent = e;
                 let p = document.createElement("p")
                 p.textContent = "invalid input"
-                const errorDiv = document.getElementById("error")
                 errorDiv.appendChild(p)
                 return
             }
