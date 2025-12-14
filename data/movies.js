@@ -424,7 +424,7 @@ export const getMoviesByName = async (name) => {
   helpers.checkValidString(name, "Name");
   const movieCollection = await movies();
   name = name.trim()
-  return movieCollection.find({ name: { $regex: `^${name}$`, $options: "i" } }).toArray();
+  return movieCollection.find({ name: { $regex: name, $options: "i" } }).toArray();
 };
 
 export const getMoviesByPopularity = async (popularity) => {
