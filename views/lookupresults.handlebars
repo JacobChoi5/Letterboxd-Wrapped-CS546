@@ -1,10 +1,14 @@
-<main>
-    <ol>
-        {{#each movies}}
-        <li>
-            <a href="/movies/{{_id}}">{{name}}</a>
-            <p>{{name}}</p>
-        </li>
-        {{/each}}
-    </ol>
-</main>
+<ol>
+    {{#each movies}}
+    <li>
+        <a href="/movies/{{_id}}">{{name}}</a>
+        <p>Relaesed: {{date}}</p>
+        <p>Director(s):</p>
+        <ul>
+            {{#each directors}}
+            <li>{{this}}</li>
+            {{/each}}
+        </ul>
+    </li>
+    {{/each}}
+</ol>

@@ -41,32 +41,8 @@
         {{/each}}
     </ul>
 
-    <p>Comment:</p>
-    <form action="/movies/{{movie._id}}/comment" method="POST" id="commentForm" data-movie-id="{{movie._id}}">
-        <input type="text" name="text" id="commentText">
-        <button type="submit">Add Comment</button>
-    </form>
-
-    <p id="commentError" class="error" hidden></p>
-
-    <p>Comments:</p>
-    <div id="comments">
-        {{#each movie.comments}}
-        {{> comment}}
-        {{/each}}
-    </div>
-
-    <form action="/movies/{{movie._id}}/add" method="POST">
-        <button type="submit">Add Movie</button>
-    </form>
-
-    <form action="/movies/{{movie._id}}/admin" method="GET">
-        <button type="submit">Admin View</button>
-    </form>
-
     <script src="https://code.jquery.com/jquery-2.2.4.min.js"
         integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
     <script src="/js/actors.js"></script>
-    <script src="/js/comments.js"></script>
 
 </main>
