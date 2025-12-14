@@ -408,39 +408,35 @@ export const calculateStatistics = async (id, period) => {
   return statistics;
 };
 
-const normalizeMovieId = (val) => {
-  if (!val) return "";
-  return String(val).trim().replace(/\r/g, "");
-};
 
 // This basically imports the user’s Letterboxd ZIP, and merges it into their movie data in MongoDB or adds it for the first time,
 // and makes all profile  or refreshes it. This is what creates the data that our
 // getters/setters later read and update within calculateStatistics().
 export const importAllUserData = async (userId, zipBuffer) => {
   checkValidId(userId);
+
   const accountCol = await accounts();
   const movieCol = await userMovieData();
+
   const user = await accountCol.findOne({ _id: new ObjectId(userId) });
   if (!user) {
     throw new Error("User not found.");
   }
-  // Extract and parse CSV files
+
   const extracted = await csvData.unZip(zipBuffer);
+
   const diaryCSV = extracted.diaryCSV;
   const ratingsCSV = extracted.ratingsCSV;
   const reviewsCSV = extracted.reviewsCSV;
+
   if (!diaryCSV) {
     throw new Error("ZIP file did not contain diary.csv.");
   }
-  if (!ratingsCSV && !reviewsCSV) {
-    throw new Error("ZIP file did not contain, ratings.csv.");
-  }
-  if (!reviewsCSV) {
-    throw new Error("ZIP file did not contain reviews.csv.");
-  }
+
   let diaryRows = [];
   let ratingRows = [];
   let reviewRows = [];
+
   if (diaryCSV) {
     diaryRows = csvData.parse(diaryCSV);
   }
@@ -450,111 +446,107 @@ export const importAllUserData = async (userId, zipBuffer) => {
   if (reviewsCSV) {
     reviewRows = csvData.parse(reviewsCSV);
   }
-  // Process diary file the  watch dates
+
+  /* ---------------- DIARY ---------------- */
   for (let i = 0; i < diaryRows.length; i++) {
     const row = diaryRows[i];
-    const rawId = row["Letterboxd URI"] || row["Link"] || row["URL"];
-    const movieId = normalizeMovieId(rawId);
-    let movieName = "";
-    if (row["Name"]) {
-      movieName = row["Name"];
+
+    if (!row["Name"] || !row["Year"]) {
+      continue;
     }
+
+    const movieName = row["Name"].trim();
+    const year = Number(row["Year"]);
+
+    const foundMovie = await movieData.findMovieByNameAndYear(movieName, year);
+    if (!foundMovie) {
+      continue;
+    }
+
+    const movieId = foundMovie._id;
+
     let dateWatched = "";
     if (row["Date"]) {
-      dateWatched = row["Date"];
+      dateWatched = row["Date"].trim();
     }
+
     let rewatchCount = 0;
     if (row["Rewatch"] && String(row["Rewatch"]).toLowerCase() === "yes") {
       rewatchCount = 1;
     }
+
     const existing = await movieCol.findOne({
-      userId: userId,
-      movieId: movieId,
+      userId: new ObjectId(userId),
+      movieId: movieId
     });
+
     if (existing) {
       await movieCol.updateOne(
-        { userId: userId, movieId: movieId },
-        { $set: { movieName, dateWatched, rewatchCount: rewatchCount } }
+        { userId: new ObjectId(userId), movieId: movieId },
+        { $set: { movieName: movieName, dateWatched: dateWatched, rewatchCount: rewatchCount } }
       );
     } else {
       await movieCol.insertOne({
-        userId: userId,
+        userId: new ObjectId(userId),
         movieId: movieId,
         movieName: movieName,
         dateWatched: dateWatched,
         rating: null,
         rewatchCount: rewatchCount,
-        reviewDescription: "",
+        reviewDescription: ""
       });
     }
   }
-  // ratings file import
+
+  /* ---------------- RATINGS ---------------- */
   for (let i = 0; i < ratingRows.length; i++) {
     const row = ratingRows[i];
-    const rawId = row["Letterboxd URI"] || row["Link"] || row["URL"];
-    const movieId = normalizeMovieId(rawId);
-    let rating = null;
-    if (row["Rating"]) {
-      rating = Number(row["Rating"]);
+
+    if (!row["Name"] || !row["Year"] || !row["Rating"]) {
+      continue;
     }
-    let name = "";
-    if (row["Name"]) {
-      name = row["Name"];
+
+    const movieName = row["Name"].trim();
+    const year = Number(row["Year"]);
+    const rating = Number(row["Rating"]);
+
+    const foundMovie = await movieData.findMovieByNameAndYear(movieName, year);
+    if (!foundMovie) {
+      continue;
     }
-    let found = await movieCol.findOne({ userId: userId, movieId: movieId });
-    if (found) {
-      await movieCol.updateOne(
-        { userId: userId, movieId: movieId },
-        { $set: { rating: rating } }
-      );
-    } else {
-      await movieCol.insertOne({
-        userId,
-        movieId,
-        movieName: name,
-        dateWatched: "",
-        rating,
-        rewatchCount: 0,
-        reviewDescription: "",
-      });
-    }
-  } // Process the  reviews
+
+    await movieCol.updateOne(
+      { userId: new ObjectId(userId), movieId: foundMovie._id },
+      { $set: { rating: rating } }
+    );
+  }
+
+  /* ---------------- REVIEWS ---------------- */
   for (let i = 0; i < reviewRows.length; i++) {
     const row = reviewRows[i];
-    const rawId = row["Letterboxd URI"] || row["Link"] || row["URL"];
-    const movieId = normalizeMovieId(rawId);
-    let reviewDescription = "";
-    if (row["Review"]) {
-      reviewDescription = row["Review"];
+
+    if (!row["Name"] || !row["Year"] || !row["Review"]) {
+      continue;
     }
-    let movieName = "";
-    if (row["Name"]) {
-      movieName = row["Name"];
+
+    const movieName = row["Name"].trim();
+    const year = Number(row["Year"]);
+    const reviewDescription = row["Review"].trim();
+
+    const foundMovie = await movieData.findMovieByNameAndYear(movieName, year);
+    if (!foundMovie) {
+      continue;
     }
-    const existingDoc = await movieCol.findOne({
-      userId: userId,
-      movieId: movieId,
-    });
-    if (existingDoc) {
-      await movieCol.updateOne(
-        { userId, movieId },
-        { $set: { reviewDescription: reviewDescription } }
-      );
-    } else {
-      await movieCol.insertOne({
-        userId: userId,
-        movieId,
-        movieName: movieName,
-        dateWatched: "",
-        rating: null,
-        rewatchCount: 0,
-        reviewDescription: reviewDescription,
-      });
-    }
+
+    await movieCol.updateOne(
+      { userId: new ObjectId(userId), movieId: foundMovie._id },
+      { $set: { reviewDescription: reviewDescription } }
+    );
   }
-  //#to do change later
+
   return "Import finished";
 };
+
 
 export const getAllAccounts = async () => {
   const accountCollection = await accounts();
