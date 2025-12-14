@@ -433,6 +433,22 @@ export const getMoviesByPopularity = async (popularity) => {
   return movieCollection.findOne({ popularity });
 };
 
+export const findMovie = async (name, year) => {
+  helpers.checkValidString(name, "Name");
+  helpers.checkValidNumber(year, "Year");
+  let movies = await getMoviesByName(name);
+  let output = null;
+  for (let movie of movies)
+  {
+    if (movie.date === year)
+    {
+      output = movie;
+      break;
+    }
+  }
+  return output
+};
+
 //super comment is for when a comment is made under another comment rather than just on the movie
 export const createComment = async (
   movieId,
