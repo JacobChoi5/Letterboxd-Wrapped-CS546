@@ -61,7 +61,6 @@ router.route('/follow').post(async (req, res) => {
 
 router.route('/createaccount').get(async (req, res) => {
     try {
-        console.log("in create account")
         res.render('signup', { Title: "Signup" })
     } catch (e) {
         return res.status(500).render('error', {
@@ -117,7 +116,6 @@ router.route('/login').post(async (req, res) => {
 router.route('/signupconfirm').post(upload.single('file'),async (req, res) => {
     const accountsignupdata = req.body
     let account = {}
-    console.log("in signup confirm")
     let age = 0
     try {
         helpers.checkValidString(accountsignupdata.username)
@@ -127,8 +125,6 @@ router.route('/signupconfirm').post(upload.single('file'),async (req, res) => {
         helpers.checkValidString(accountsignupdata.password)
         accountsignupdata.password = xss(accountsignupdata.password.trim())
         helpers.checkValidString(accountsignupdata.password)
-
-        console.log(accountsignupdata)
 
         let age = Number(accountsignupdata.age)
         helpers.checkValidAge(age)
@@ -183,13 +179,11 @@ router.route('/myaccount').get(requireLogin, async (req, res) => {
         currentUserId = currentUserId.trim()
         helpers.checkValidId(currentUserId)
         curuser = await accountData.getAccountById(currentUserId)
-        console.log("current user: ")
-        console.log(curuser)
-        //statistics = await accountData.calculateStatistics(currentUserId)
-        //console.log(statistics)
         res.render('myaccount', {
             Title: "My Account",
-            account: curuser
+            username: curuser.username,
+            age: curuser.age,
+            profile_description: curuser.profile_description
         });
     } catch (e) {
         return res.status(401).render('error', {
@@ -322,7 +316,6 @@ router.route('/accountlookupresults').post(async (req, res) => {
     }
     try {
         let accounts = await accountData.getAccountByUsername(accountlookupdata.accountName)
-        console.log(accounts)
         res.render('accountlookupresults', { accounts: accounts, Title: accountlookupdata.accountName + " Results" })
     } catch (e) {
         return res.status(500).render('error', {
@@ -337,7 +330,6 @@ router.route('/:id').get(async (req, res) => {
     //createStatsObject(id)
     let account = {}
     let statistics = {}
-    console.log("in :id")
     try {
         helpers.checkValidId(id)
         id = id.trim()
