@@ -295,10 +295,7 @@ router.route('/:id/comment').post(async (req, res) => {
     }
     try {
         let movie = await movieData.getMovieById(req.params.id)
-        res.render('moviebyid', {
-            movie: movie,
-            Title: movie.name
-        })
+        res.json(movie.comments)
     } catch (e) {
         return res.status(500).render('error', {
             errorMessage: 'Failed to render movie page: ' + e,
@@ -340,10 +337,7 @@ router.route('/:id/likecomment').post(async (req, res) => {
 
     try {
         let movie = await movieData.getMovieById(req.params.id)
-        res.render('moviebyid', {
-            movie: movie,
-            Title: movie.name
-        })
+        res.json(movie.comments)
     } catch (e) {
         return res.status(500).render('error', {
             errorMessage: 'Failed to render movie page: ' + e,
