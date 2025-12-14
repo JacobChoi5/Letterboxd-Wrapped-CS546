@@ -439,9 +439,8 @@ export const calculateStatistics = async (id, period) => {
   return statistics;
 };
 
-// This basically imports the user’s Letterboxd ZIP, and merges it into their movie data in MongoDB or adds it for the first time,
-// and makes all profile  or refreshes it. This is what creates the data that our
-// getters/setters later read and update within calculateStatistics().
+
+
 export const importAllUserData = async (userId, zipBuffer) => {
   checkValidId(userId);
 
@@ -477,7 +476,6 @@ export const importAllUserData = async (userId, zipBuffer) => {
     reviewRows = csvData.parse(reviewsCSV);
   }
 
-  /* ---------------- DIARY ---------------- */
   for (let i = 0; i < diaryRows.length; i++) {
     const row = diaryRows[i];
 
@@ -508,7 +506,7 @@ export const importAllUserData = async (userId, zipBuffer) => {
     const existing = await movieCol.findOne({
       userId: new ObjectId(userId),
       movieName: movieName,
-      year: year,
+      year: year
     });
 
     if (existing) {
@@ -526,12 +524,11 @@ export const importAllUserData = async (userId, zipBuffer) => {
         rating: null,
         rewatchCount: rewatchCount,
         reviewDescription: "",
-        external: movieId === null,
+        external: movieId === null
       });
     }
   }
 
-  /* ---------------- RATINGS ---------------- */
   for (let i = 0; i < ratingRows.length; i++) {
     const row = ratingRows[i];
 
@@ -543,13 +540,17 @@ export const importAllUserData = async (userId, zipBuffer) => {
     const year = Number(row["Year"]);
     const rating = Number(row["Rating"]);
 
+    const foundMovie = await movieData.findMovie(movieName,year);
+    if(!foundMovie)
+    {
+      continue;
+    }
     await movieCol.updateOne(
-      { userId: new ObjectId(userId), movieName: movieName, year: year },
+      { userId: new ObjectId(userId), movieName: movieName, movieId: foundMovie._id},
       { $set: { rating: rating } }
     );
   }
 
-  /* ---------------- REVIEWS ---------------- */
   for (let i = 0; i < reviewRows.length; i++) {
     const row = reviewRows[i];
 
@@ -569,6 +570,7 @@ export const importAllUserData = async (userId, zipBuffer) => {
 
   return "Import finished";
 };
+
 
 export const getAllAccounts = async () => {
   const accountCollection = await accounts();
