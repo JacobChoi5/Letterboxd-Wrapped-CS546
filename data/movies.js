@@ -361,7 +361,7 @@ export const updateMovie = async (
 };
 
 export const deleteMovie = async (id) => {
-  checkValidId(id, "id");
+  helpers.checkValidId(id, "id");
   let movieCollection = await movies();
   let findMovie = await movieCollection.findOne({
     _id: new ObjectId(id),
@@ -371,7 +371,7 @@ export const deleteMovie = async (id) => {
     throw "movie with that id could not be found";
   }
 
-  const deletionInfo = await accountCollection.deleteOne({
+  const deletionInfo = await movieCollection.deleteOne({
     _id: new ObjectId(id),
   });
 
