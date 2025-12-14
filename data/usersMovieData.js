@@ -1,5 +1,6 @@
 
 import {checkValidString, checkValidId,checkValidNumber} from "../helpers.js";
+import * as helpers from '../helpers.js';
 import { ObjectId } from "mongodb";
 import { userMovieData } from '../config/mongoCollections.js';
 import JSZip from "jszip";
@@ -352,3 +353,28 @@ export const setReviewDescription = async (movieId, userId, val)=>
     return entry.value.reviewDescription;
 };
 
+export const addMovieForUser = async (movieId, userId, movieName) => {
+    helpers.checkValidId(movieId);
+    helpers.checkValidId(userId);
+    helpers.checkValidString(movieName);
+
+    const collection = await userMovieData();
+
+    const newEntry = {
+        userId: new ObjectId(userId),
+        movieId: new ObjectId(movieId),
+        movieName: movieName.trim(),
+        rating: null,
+        dateWatched: null,
+        rewatchCount: 0,
+        reviewDescription: ""
+    };
+
+    const insertInfo = await collection.insertOne(newEntry);
+
+    if (!insertInfo.acknowledged) {
+        throw "Could not add movie for user";
+    }
+
+    return true;
+};

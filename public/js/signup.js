@@ -36,32 +36,26 @@
                 return
             }
 
-            let requestConfig = {
-                method: 'POST',
-                url: '/signupconfirm',   // your Express route
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    username: username,
-                    password: password,
-                    age: age,
-                    description: description
-                })
-            }
+           const formData = new FormData(inputForm);
 
-            $.ajax(requestConfig).then(function (responseMessage) {
-                console.log(responseMessage)
-                if(responseMessage.success){
-                    inputForm.replaceWith(`${responseMessage.message}`)
-                }else{
-                    console.log(responseMessage.message)
-                    //update error div with error message
-                    let p = document.createElement("p")
-                    p.textContent = `Error: ${responseMessage.message}`
-                    const errorDiv = document.getElementById("error")
-                    errorDiv.appendChild(p)
-                }
-                
-            })
+$.ajax({
+    method: 'POST',
+    url: '/signupconfirm',
+    data: formData,
+    processData: false,
+    contentType: false
+}).then(function (responseMessage) {
+    console.log(responseMessage)
+    if (responseMessage.success) {
+        inputForm.replaceWith(`${responseMessage.message}`)
+    } else {
+        let p = document.createElement("p")
+        p.textContent = `Error: ${responseMessage.message}`
+        const errorDiv = document.getElementById("error")
+        errorDiv.appendChild(p)
+    }
+});
+
 
 
         })

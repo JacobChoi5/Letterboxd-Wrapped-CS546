@@ -1,7 +1,12 @@
 <!--TODO-->
 <main>
     <div id="error"></div>
-    <form id="signupform">
+    <form
+  id="signupform"
+  action="/signupconfirm"
+  method="POST"
+  enctype="multipart/form-data"
+            >
         <label for="username">Username</label>
         <input type="text" id="username" name="username" required>
 
