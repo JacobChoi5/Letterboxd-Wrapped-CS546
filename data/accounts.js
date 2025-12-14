@@ -90,10 +90,10 @@ export const calculateStatistics = async (id, period) => {
 
   //movie data is in the userMovieData Collection
 
-  checkValidId(id);
+  checkValidId(id, "id");
   checkValidString(period);
 
-  if (period != "all" || period != "year" || period != "month") {
+  if (period != "all" && period != "year" && period != "month") {
     throw "The period parameter in calcStats must be all, year, or month";
   }
 
@@ -127,7 +127,12 @@ export const calculateStatistics = async (id, period) => {
 
   //could instead loop over getMovieById for each movie, save to list, then loop over the result so we do not keep making database calls
   for (let movie of movies_watched) {
-    let the_movie = await movieData.getMovieById(movie["movieId"]);
+    let the_movie = 0;
+    if (movie.movieId != null) {
+      the_movie = await movieData.getMovieById(movie.movieId);
+    } else {
+      continue;
+    }
 
     if (the_movie["genres"] !== "Unknown Genres") {
       genre_list.push(the_movie["genres"]);
@@ -278,7 +283,7 @@ export const calculateStatistics = async (id, period) => {
   //Average User Movie Rating: average_movie_rating
   let rating_list = [];
   for (let movie of movies_watched) {
-    rating_list.push(await csvData.getRating(movie["movieId"], id));
+    rating_list.push(movie["rating"]);
   }
 
   let rating_count = 0;
@@ -293,6 +298,7 @@ export const calculateStatistics = async (id, period) => {
     average_movie_rating = total / rating_count;
   }
 
+  average_movie_rating = Number(average_movie_rating.toFixed(2));
   //Average Different between user's rating and global movie averages: rating_difference
   let global_rating_count = 0;
   let global_total = 0;
@@ -314,6 +320,7 @@ export const calculateStatistics = async (id, period) => {
     rating_difference = average_movie_rating - global_average_movie_rating;
   }
 
+  rating_difference = rating_difference.toFixed(2);
   //Hours spent watching movies: hours_watching_movies
   let duration_count = 0;
   for (let duration of duration_list) {
@@ -322,14 +329,18 @@ export const calculateStatistics = async (id, period) => {
 
   let hours_watching_movies = duration_count / 60;
 
+  hours_watching_movies = Number(hours_watching_movies.toFixed(2));
+
   //Recomendations
 
   //Recommendations based on genres
-  let popularity_number = 1000000;
+  let popularity_number = 1000001;
   let movie_genre_recommendation_list = [];
 
   while (true) {
-    let popular_movie = await movieData.getMovieByPopularity(popularity_number);
+    let popular_movie = await movieData.getMoviesByPopularity(
+      popularity_number
+    );
 
     if (!popular_movie) break;
 
@@ -352,10 +363,12 @@ export const calculateStatistics = async (id, period) => {
   }
 
   //Recommendations based off actor
-  popularity_number = 1000000;
+  popularity_number = 1000001;
   let movie_actor_recommendation_list = [];
   while (true) {
-    let popular_movie = await movieData.getMovieByPopularity(popularity_number);
+    let popular_movie = await movieData.getMoviesByPopularity(
+      popularity_number
+    );
 
     if (!popular_movie) break;
 
@@ -379,10 +392,12 @@ export const calculateStatistics = async (id, period) => {
   }
 
   //Recommendations based off director
-  popularity_number = 1000000;
+  popularity_number = 1000001;
   let movie_director_recommendation_list = [];
   while (true) {
-    let popular_movie = await movieData.getMovieByPopularity(popularity_number);
+    let popular_movie = await movieData.getMoviesByPopularity(
+      popularity_number
+    );
 
     if (!popular_movie) break;
 
@@ -412,6 +427,7 @@ export const calculateStatistics = async (id, period) => {
   };
 
   let statistics = {
+    movies_watched: movies_watched,
     genres: top_3_genres,
     directors: top_3_director,
     actors: top_3_actors,
@@ -492,7 +508,7 @@ export const importAllUserData = async (userId, zipBuffer) => {
     const existing = await movieCol.findOne({
       userId: new ObjectId(userId),
       movieName: movieName,
-      year: year
+      year: year,
     });
 
     if (existing) {
@@ -510,7 +526,7 @@ export const importAllUserData = async (userId, zipBuffer) => {
         rating: null,
         rewatchCount: rewatchCount,
         reviewDescription: "",
-        external: movieId === null
+        external: movieId === null,
       });
     }
   }
@@ -553,8 +569,6 @@ export const importAllUserData = async (userId, zipBuffer) => {
 
   return "Import finished";
 };
-
-
 
 export const getAllAccounts = async () => {
   const accountCollection = await accounts();

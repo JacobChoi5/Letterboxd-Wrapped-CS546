@@ -423,19 +423,23 @@ export const getMoviesByYear = async (year) => {
 export const getMoviesByName = async (name) => {
   helpers.checkValidString(name, "Name");
   const movieCollection = await movies();
-  name = name.trim()
-  return movieCollection.find({ name: { $regex: name, $options: "i" } }).toArray();
+  name = name.trim();
+  return movieCollection
+    .find({ name: { $regex: name, $options: "i" } })
+    .toArray();
 };
 
 export const getMoviesByPopularity = async (popularity) => {
-  helpers.checkValidString(popularity, "Popularity");
+  helpers.checkValidNumber(popularity, "Popularity");
   const movieCollection = await movies();
-  return movieCollection.findOne({ popularity });
+  return movieCollection.findOne({ popularity: popularity });
 };
 
-//got this regex from google 
+//got this regex from google
 const normalize = (str) => {
-  return str.toLowerCase().replace(/[:’'".,!?()-]/g, "")  
+  return str
+    .toLowerCase()
+    .replace(/[:’'".,!?()-]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 };
@@ -445,19 +449,17 @@ export const findMovie = async (name, year) => {
   helpers.checkValidNumber(year, "Year");
 
   const movieCollection = await movies();
-  name = name.trim()
-  let moviesList = await movieCollection.find({name: name.trim()}).toArray();
+  name = name.trim();
+  let moviesList = await movieCollection.find({ name: name.trim() }).toArray();
 
   let output = null;
-  for (let movie of moviesList)
-  {
-    if (movie.date === year)
-    {
+  for (let movie of moviesList) {
+    if (movie.date === year) {
       output = movie;
       break;
     }
   }
-  return output
+  return output;
 };
 
 // export const findMovie = async (name, year) => {
