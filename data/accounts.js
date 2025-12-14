@@ -93,6 +93,10 @@ export const calculateStatistics = async (id, period) => {
   checkValidId(id);
   checkValidString(period);
 
+  if (period != "all" || period != "year" || period != "month") {
+    throw "The period parameter in calcStats must be all, year, or month";
+  }
+
   let movies_watched = await csvData.getAllMoviesWatched(id);
   if (!movies_watched) throw "Could not get all movies";
 
@@ -121,6 +125,7 @@ export const calculateStatistics = async (id, period) => {
   let global_rating_list = [];
   let duration_list = [];
 
+  //could instead loop over getMovieById for each movie, save to list, then loop over the result so we do not keep making database calls
   for (let movie of movies_watched) {
     let the_movie = await movieData.getMovieById(movie["movieId"]);
 
@@ -295,7 +300,12 @@ export const calculateStatistics = async (id, period) => {
     global_total += global_movie_rating;
     global_rating_count++;
   }
-  let global_average_movie_rating = global_total / global_rating_count;
+
+  let global_average_movie_rating =
+    "No movies you have watched have global ratings";
+  if (global_rating_count != 0) {
+    global_average_movie_rating = global_total / global_rating_count;
+  }
 
   let rating_difference = 0;
   if (average_movie_rating == 0) {
