@@ -2,7 +2,7 @@
 <p>{{postedAt}}</p>
 <p>{{username}}: {{text}}</p>
 <p>Likes: {{likes.length}}</p>
-    <form action="/movies/{{@root.movie._id}}/likecomment" method="POST">
+    <form class="likeForm" data-movie-id="{{@root.movie._id}}" data-comment-id="{{_id}}">
         <input type="hidden" name="commentId" value="{{_id}}">
         <button type="submit">♥</button>
     </form>

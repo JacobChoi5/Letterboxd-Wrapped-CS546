@@ -6,7 +6,6 @@ let comments = $('#comments'),
 
 commentForm.on('submit', function (event) {
   event.preventDefault()
-  actors.empty()
 
   let text = commentText.val().trim()
 
@@ -39,11 +38,11 @@ function displayComment(comment, movieId) {
   let html = 
   `
     <hr>
-    <p>${comment.postedAt}</p>
+    <p>${new Date(comment.postedAt).toString()}</p>
     <p>${comment.username}: ${comment.text}</p>
     <p>Likes: ${comment.likes.length}</p>
 
-    <form action="/movies/${movieId}/likecomment" method="POST">
+    <form class="likeForm" data-movie-id="${movieId}" data-comment-id="${comment._id}">
       <input type="hidden" name="commentId" value="${comment._id}">
       <button type="submit">♥</button>
     </form>
@@ -68,7 +67,6 @@ function displayComment(comment, movieId) {
 
 //https://stackoverflow.com/questions/18545941/jquerys-on-method-combined-with-the-submit-event
 //https://stackoverflow.com/questions/12191416/jquery-get-input-value-inside-this-based-on-name
-
 $(document).on('submit', '.replyForm', function (event) {
   event.preventDefault();
 
@@ -92,7 +90,6 @@ $(document).on('submit', '.replyForm', function (event) {
     }
   })
   .then(function (data) {
-    commentText.val('');
     comments.empty();
       for (let comment of data) 
       {
@@ -100,3 +97,25 @@ $(document).on('submit', '.replyForm', function (event) {
       }
   })
 });
+
+$(document).on('submit', '.likeForm', function (event) {
+  event.preventDefault()
+  
+  const form = $(this)
+  const commentId = form.data('comment-id')
+
+  $.ajax({
+    method: 'POST',
+    url: `/movies/${movieId}/likecomment`,
+    data: { commentId }
+  })
+  .then(function (data) {
+    comments.empty();
+      for (let comment of data) 
+      {
+        comments.append(displayComment(comment, movieId));
+      }
+  })
+});
+
+//https://stackoverflow.com/questions/19015897/jquery-ajax-simple-call
