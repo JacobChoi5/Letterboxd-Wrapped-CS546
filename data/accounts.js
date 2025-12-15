@@ -125,7 +125,6 @@ export const calculateStatistics = async (id, period) => {
   let global_rating_list = [];
   let duration_list = [];
 
-  //could instead loop over getMovieById for each movie, save to list, then loop over the result so we do not keep making database calls
   for (let movie of movies_watched) {
     let the_movie = 0;
     if (movie.movieId != null) {
