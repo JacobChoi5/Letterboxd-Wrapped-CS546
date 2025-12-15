@@ -13,49 +13,20 @@
 
         <button type"update">Update</button>
     </form>
-
-    <form id="filterForm">
-        <label>All Time</label>
-        <input type="radio" name="range" value="alltime" checked>
-
-        <label> Past Year</label>
-        <input type="radio" name="range" value="year">
-
-        <label>Past Month</label>
-        <input type="radio" name="range" value="month">
-
-        <button type="submit">Submit</button>
-    </form>
-
-    <h3>Average Rating: {{average_rating}}</h3>
-    <h3>Average Rating Delta: {{rating_delta}}</h3>
-    <h3>Hours Spent Wathing: {{num_hours}}</h3>
-
-    <h2>Top Genres</h2>
+    <h2>Followers</h2>
     <ul>
-        {{#each genres}}
-        <li>{{genre}}</li>
+        {{#each followers}}
+            <li>
+                <a href="/{{_id}}">{{username}}</a>
+            </li>
         {{/each}}
     </ul>
-
-    <h2>Top Actors</h2>
+    <h2>Following</h2>
     <ul>
-        {{#each actor}}
-        <li>{{actor}}</li>
-        {{/each}}
-    </ul>
-
-    <h2>Top Directors</h2>
-    <ul>
-        {{#each directors}}
-        <li>{{director}}</li>
-        {{/each}}
-    </ul>
-
-    <h2>Top Themes</h2>
-    <ul>
-        {{#each themes}}
-        <li>{{theme}}</li>
+        {{#each following}}
+            <li>
+                <a href="/{{_id}}">{{username}}</a>
+            </li>
         {{/each}}
     </ul>
 </main>
