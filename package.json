@@ -5,11 +5,10 @@
   "main": "app.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app.js",
     "seed": "node seed.js"
   },
-  "author": "",
+  "author": "Jacob Choi, Thomas Ung, Sutej Upadhyaya, Lucas Vanzelli",
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^6.0.0",
