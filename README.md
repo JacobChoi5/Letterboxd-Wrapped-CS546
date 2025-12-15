@@ -37,7 +37,8 @@ Username, Password, Password Confirmation, Age, Description (Optional), Upload Z
 All have proper error checking from both client side and server side. Username is checked for uniqueness (case-insensitive). Passwords are checked for equality and then salted, hashed, and stored on server. Age is checked for validity (13-100)
 
 Data flow:
-Upload zip file downloaded from letterboxd (Export data from https://letterboxd.com/settings/data/) either while or after creating account and/or manually add movies from search function.
+Upload zip file downloaded from letterboxd (Export data from https://letterboxd.com/settings/data/) after creating account and/or manually add movies from search function.
+Uploading zip files will take a while. Two options are provided, the kurk file is shorter to upload but has less extensive data.
 
 Movie Search:
 From /movies/lookup, type in search term and recieve list of all movies with information such as release year and director that match that name with clickable links.
