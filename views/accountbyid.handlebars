@@ -1,10 +1,10 @@
 <main>
-    <form action="/{{id}}/follow" method="POST" class="follow-form">
-        <button type="follow">Follow</button>
+    <form action="/{{id}}/{{follow}}" method="POST" class="follow-form">
+        <button type="submit" value="{{follow}}">{{follow}}</button>
     </form>
     <form id="filterForm">
         <label>All Time</label>
-        <input type="radio" name="range" value="alltime" checked>
+        <input type="radio" name="range" value="all" checked>
 
         <label> Past Year</label>
         <input type="radio" name="range" value="year">
@@ -49,13 +49,7 @@
         {{#each statistics.recommendations.genre_based}}
         <li>
             <a href="/movies/{{_id}}">{{name}}</a>
-            <p>Relaesed: {{date}}</p>
-            <p>Director(s):</p>
-            <ul>
-                {{#each directors}}
-                <li>{{this}}</li>
-                {{/each}}
-            </ul>
+            <p>Released: {{date}}</p>
         </li>
         {{/each}}
     </ul>
@@ -65,13 +59,7 @@
         {{#each statistics.recommendations.actor_based}}
         <li>
             <a href="/movies/{{_id}}">{{name}}</a>
-            <p>Relaesed: {{date}}</p>
-            <p>Director(s):</p>
-            <ul>
-                {{#each directors}}
-                <li>{{this}}</li>
-                {{/each}}
-            </ul>
+            <p>Released: {{date}}</p>
         </li>
         {{/each}}
     </ul>
@@ -81,7 +69,7 @@
         {{#each statistics.recommendations.director_based}}
         <li>
             <a href="/movies/{{_id}}">{{name}}</a>
-            <p>Relaesed: {{date}}</p>
+            <p>Released: {{date}}</p>
             <p>Director(s):</p>
             <ul>
                 {{#each directors}}

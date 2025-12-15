@@ -154,14 +154,14 @@ router.route('/myaccount').get(requireLogin, async (req, res) => {
         curuser = await accountData.getAccountById(currentUserId)
         let followinglist = []
         let followerlist = []
-        for(let id of curuser.following){
+        for (let id of curuser.following) {
             let account = await accountData.getAccountById(id)
             followinglist.push({
                 username: account.username,
                 _id: account._id
             })
         }
-        for(let id of curuser.followers){
+        for (let id of curuser.followers) {
             let account = await accountData.getAccountById(id)
             followerlist.push({
                 username: account.username,
@@ -217,7 +217,7 @@ router.route('/mydata').get(requireLogin, async (req, res) => {
         })
     } catch (e) {
         return res.status(500).render('error', {
-            errorMessage: 'Try uploading some more data first!' + e,
+            errorMessage: 'Try uploading some more data first!',
             class: 'statistics-fail'
         })
     }
@@ -272,7 +272,7 @@ router.route('/updatemyccount').post(requireLogin, async (req, res) => {
     }
 })
 
-router.route('/uploaddata').get(async (req, res) => {
+router.route('/uploaddata').get(requireLogin, async (req, res) => {
     try {
         res.status(200).render('uploaddata', { Title: "My Data" })
     } catch (e) {
@@ -345,9 +345,10 @@ router.route('/accountlookupresults').post(async (req, res) => {
 })
 
 
-router.route('/:id').get(async (req, res) => {
+router.route('/:id').get(requireLogin, async (req, res) => {
     //createStatsObject(id)
     let account = {}
+    let curuser = {}
     let statistics = {}
     let id = ""
     let range = "all"
@@ -370,12 +371,28 @@ router.route('/:id').get(async (req, res) => {
         })
     }
     try {
+        let currentUserId = req.session.user._id
+        helpers.checkValidId(currentUserId)
+        currentUserId = xss(currentUserId.trim())
+        helpers.checkValidId(currentUserId)
+        curuser = await accountData.getAccountById(currentUserId)
+    } catch (e) {
+        return res.status(401).render('error', {
+            errorMessage: 'Not logged in: ' + e,
+            class: 'login-fail'
+        })
+    }
+    try {
         if (account.isPrivate) throw "account is private"
     } catch (e) {
         return res.status(403).render('error', {
             errorMessage: 'Account is private',
             class: 'page-fail'
         })
+    }
+    let follow = "follow"
+    if(curuser.following.includes(account._id)){
+        follow = "unfollow"
     }
     try {
         console.log("statistics")
@@ -384,7 +401,7 @@ router.route('/:id').get(async (req, res) => {
     } catch (e) {
         console.log(e)
         try {
-            return res.status(500).render('accountbyid', { Title: account.username, id: account._id, statistics: statistics, range: range })
+            return res.status(500).render('accountbyid', { Title: account.username, id: account._id, statistics: statistics, range: range, follow: follow })
         } catch (e) {
             return res.status(500).render('error', {
                 errorMessage: 'Failed to render account by id page: ' + e,
@@ -393,7 +410,7 @@ router.route('/:id').get(async (req, res) => {
         }
     }
     try {
-        return res.status(200).render('accountbyid', { Title: account.username, id: account._id, statistics: statistics, range: range })
+        return res.status(200).render('accountbyid', { Title: account.username, id: account._id, statistics: statistics, range: range, follow: follow })
     } catch (e) {
         return res.status(500).render('error', {
             errorMessage: 'Failed to render account by id page: ' + e,
@@ -433,6 +450,45 @@ router.route('/:id/follow').post(requireLogin, async (req, res) => {
     try {
         await accountData.addFollower(id, currentUserId)
         return res.status(200).render('success', { Title: "Follow Confirmed", successMessage: `${account.username} followed!` })
+    } catch (e) {
+        return res.status(500).render('error', {
+            errorMessage: 'Failed to follow account: ' + e,
+            class: 'page-fail'
+        })
+    }
+})
+
+router.route('/:id/unfollow').post(requireLogin, async (req, res) => {
+    let currentUserId = ""
+    let id = ""
+    let account = {}
+    let curuser = {}
+    try {
+        currentUserId = req.session.user._id
+        helpers.checkValidId(currentUserId)
+        currentUserId = xss(currentUserId.trim())
+        helpers.checkValidId(currentUserId)
+        curuser = await accountData.getAccountById(currentUserId)
+    } catch (e) {
+        return res.status(401).render('error', {
+            errorMessage: 'Invalid credentials: ' + e,
+            class: 'login-fail'
+        })
+    }
+    try {
+        helpers.checkValidId(req.params.id)
+        id = xss(req.params.id.trim())
+        helpers.checkValidId(id)
+        account = await accountData.getAccountById(id)
+    } catch (e) {
+        return res.status(404).render('error', {
+            errorMessage: 'Page Not Found: ' + e,
+            class: 'page-fail'
+        })
+    }
+    try {
+        await accountData.unfollow(currentUserId, id)
+        return res.status(200).render('success', { Title: "Unfollow Confirmed", successMessage: `${account.username} unfollowed!` })
     } catch (e) {
         return res.status(500).render('error', {
             errorMessage: 'Failed to follow account: ' + e,
