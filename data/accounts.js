@@ -439,8 +439,6 @@ export const calculateStatistics = async (id, period) => {
   return statistics;
 };
 
-
-
 export const importAllUserData = async (userId, zipBuffer) => {
   checkValidId(userId);
 
@@ -506,7 +504,7 @@ export const importAllUserData = async (userId, zipBuffer) => {
     const existing = await movieCol.findOne({
       userId: new ObjectId(userId),
       movieName: movieName,
-      year: year
+      year: year,
     });
 
     if (existing) {
@@ -524,7 +522,7 @@ export const importAllUserData = async (userId, zipBuffer) => {
         rating: null,
         rewatchCount: rewatchCount,
         reviewDescription: "",
-        external: movieId === null
+        external: movieId === null,
       });
     }
   }
@@ -540,13 +538,16 @@ export const importAllUserData = async (userId, zipBuffer) => {
     const year = Number(row["Year"]);
     const rating = Number(row["Rating"]);
 
-    const foundMovie = await movieData.findMovie(movieName,year);
-    if(!foundMovie)
-    {
+    const foundMovie = await movieData.findMovie(movieName, year);
+    if (!foundMovie) {
       continue;
     }
     await movieCol.updateOne(
-      { userId: new ObjectId(userId), movieName: movieName, movieId: foundMovie._id},
+      {
+        userId: new ObjectId(userId),
+        movieName: movieName,
+        movieId: foundMovie._id,
+      },
       { $set: { rating: rating } }
     );
   }
@@ -570,7 +571,6 @@ export const importAllUserData = async (userId, zipBuffer) => {
 
   return "Import finished";
 };
-
 
 export const getAllAccounts = async () => {
   const accountCollection = await accounts();
@@ -664,6 +664,32 @@ export const addFollower = async (userId, followerId) => {
   return getAccountById(userId);
 };
 
+export const unfollow = async (userId, followerId) => {
+  checkValidId(userId);
+  checkValidId(followerId);
+
+  let accountCollection = await accounts();
+  const updateUser = await accountCollection.updateOne(
+    { _id: new ObjectId(userId) },
+    { $pull: { following: followerId } }
+  );
+
+  const updateFollower = await accountCollection.updateOne(
+    { _id: new ObjectId(followerId) },
+    { $pull: { followers: userId } }
+  );
+
+  if (updateUser.matchedCount == 0) {
+    throw "Error in removing follower";
+  }
+
+  if (updateFollower.matchedCount == 0) {
+    throw "Error in removing from following";
+  }
+
+  return getAccountById(userId);
+};
+
 export const updateAge = async (userId, age) => {
   checkValidId(userId);
   checkValidAge(age);
@@ -704,8 +730,8 @@ export const updateIsPrivate = async (userId, status) => {
 
 export const updateProfileDescription = async (userId, description) => {
   checkValidId(userId);
-  if (profile_description != "" && typeof profile_description == "string") {
-    checkValidString(profile_description);
+  if (description != "" && typeof description == "string") {
+    checkValidString(description);
   }
   let accountCollection = await accounts();
   //Source: https://www.geeksforgeeks.org/mongodb/mongodb-addtoset-operator/
