@@ -411,6 +411,18 @@ router.route('/:id/add').post(requireLogin, async (req, res) => {
         });
     }
 
+    let rating = NaN
+    try{
+        rating = Number(req.body.rating)
+        helpers.checkValidNumber(rating, "rating")
+        if(rating > 5 || rating < 0) throw "invalid rating"
+    } catch(e) {
+        return res.status(400).render('error', {
+            errorMessage: 'Invalid rating for movie: ' + e,
+            class: 'bad-rating'
+        })
+    }
+
     // fetch movie
     let movie;
     try {
@@ -427,7 +439,8 @@ router.route('/:id/add').post(requireLogin, async (req, res) => {
         await userMovieData.addMovieForUser(
             movieId,
             userId,
-            movie.name
+            movie.name,
+            rating
         );
     } catch (e) {
         return res.status(500).render('error', {
