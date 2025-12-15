@@ -601,7 +601,7 @@ router.route('/:id/editmovie').post(requireLogin, async (req, res) => {
     }
 })
 
-router.route('/:id/editmovie').post(requireLogin, async (req, res) => {
+router.route('/:id/deletemovie').post(requireLogin, async (req, res) => {
     let movieId = req.params.id
 
     try {

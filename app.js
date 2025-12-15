@@ -25,10 +25,6 @@ const handlebarsInstance = exphbs.create({
 app.engine('handlebars', handlebarsInstance.engine);
 app.set('view engine', 'handlebars');
 
-// What i need to do 
-// middleware cookie handling for checking is users logged in and hwat tjeir user name and id is  and 
-// d file uploads plus extra. how to see which account is signied in.
-
 app.use(
   session({
     name: 'Letterboxd_Session',

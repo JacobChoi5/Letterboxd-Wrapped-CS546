@@ -217,7 +217,7 @@ router.route('/mydata').get(requireLogin, async (req, res) => {
         })
     } catch (e) {
         return res.status(500).render('error', {
-            errorMessage: 'Try uploading some more data first!',
+            errorMessage: 'Try uploading some more data first!' + e,
             class: 'statistics-fail'
         })
     }

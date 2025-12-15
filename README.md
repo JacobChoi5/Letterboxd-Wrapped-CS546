@@ -19,8 +19,6 @@
 - Integration with movie posters from Letterboxd.
 - Allows users to follow other users
 - Users have a public profile page where users can compare their statistics with other users (top movies, genres, hours spent watching).
-### Extra
-- Private and public profiles
 ## Usage
 ### Seeding
 `npm run seed` to seed database and admin account
