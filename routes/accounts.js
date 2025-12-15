@@ -200,15 +200,15 @@ router.route('/mydata').get(requireLogin, async (req, res) => {
         })
     }
     try {
-        let time = "all"
+        let range = "all"
         if (req.query) {
             if (req.query.range) {
                 helpers.checkValidString(req.query.range)
-                time = xss(req.query.range.trim())
-                helpers.checkValidString(time)
+                range = xss(req.query.range.trim())
+                helpers.checkValidString(range)
             }
         }
-        statistics = await accountData.calculateStatistics(curuser._id, time)
+        statistics = await accountData.calculateStatistics(curuser._id, range)
         return res.status(200).render('mydata', {
             Title: "My Account",
             username: curuser.username,
@@ -309,17 +309,6 @@ router.route('/uploaddata').post(requireLogin,
         }
     });
 
-
-router.route('/addmovie').get(async (req, res) => {
-    try {
-        res.status(200).render('addmovie', { Title: "Add Movie" })
-    } catch (e) {
-        return res.status(500).render('error', {
-            errorMessage: 'Failed to render movie adding page: ' + e,
-            class: 'page-fail'
-        })
-    }
-})
 
 router.route('/accountlookup').get(async (req, res) => {
     try {
