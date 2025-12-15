@@ -1,7 +1,7 @@
 <main>
     <form action="/mydata" method="GET" id="filterForm">
         <label>All Time</label>
-        <input type="radio" name="range" value="alltime" checked>
+        <input type="radio" name="range" value="all" checked>
 
         <label> Past Year</label>
         <input type="radio" name="range" value="year">
@@ -17,8 +17,8 @@
     <h2>Range: {{range}}</h2>
 
     <h3>Average Rating: {{statistics.rating}}</h3>
-    <h3>Average Rating Delta: {{statistics.global_difference}}</h3>
-    <h3>Hours Spent Wathing: {{statistics.hours_watched}}</h3>
+    <h3>Your Difference From Average: {{statistics.global_difference}}</h3>
+    <h3>Hours Spent Watching: {{statistics.hours_watched}}</h3>
 
     <h2>Top Genres</h2>
     <ul>
@@ -46,13 +46,7 @@
         {{#each statistics.recommendations.genre_based}}
         <li>
             <a href="/movies/{{_id}}">{{name}}</a>
-            <p>Relaesed: {{date}}</p>
-            <p>Director(s):</p>
-            <ul>
-                {{#each directors}}
-                <li>{{this}}</li>
-                {{/each}}
-            </ul>
+            <p>Released: {{date}}</p>
         </li>
         {{/each}}
     </ul>
@@ -62,13 +56,7 @@
         {{#each statistics.recommendations.actor_based}}
         <li>
             <a href="/movies/{{_id}}">{{name}}</a>
-            <p>Relaesed: {{date}}</p>
-            <p>Director(s):</p>
-            <ul>
-                {{#each directors}}
-                <li>{{this}}</li>
-                {{/each}}
-            </ul>
+            <p>Released: {{date}}</p>
         </li>
         {{/each}}
     </ul>
@@ -78,7 +66,7 @@
         {{#each statistics.recommendations.director_based}}
         <li>
             <a href="/movies/{{_id}}">{{name}}</a>
-            <p>Relaesed: {{date}}</p>
+            <p>Released: {{date}}</p>
             <p>Director(s):</p>
             <ul>
                 {{#each directors}}
