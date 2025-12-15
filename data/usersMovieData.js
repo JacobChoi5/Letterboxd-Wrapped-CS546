@@ -11,7 +11,7 @@ import JSZip from "jszip";
 
 export const unZip = async (zipBuffer) => {
   const zip = await JSZip.loadAsync(zipBuffer);
-//learned how to use jzip from google as wasn't sure how to unzip with current node
+  //learned how to use jzip from google as wasn't sure how to unzip with current node
   const getFileText = async (fileName) => {
     const file = zip.file(fileName);
     if (!file) {
@@ -264,19 +264,39 @@ export const setReviewDescription = async (movieId, userId, val) => {
   return entry.value.reviewDescription;
 };
 
-export const addMovieForUser = async (movieId, userId, movieName) => {
+export const addMovieForUser = async (movieId, userId, movieName, rating) => {
   helpers.checkValidId(movieId);
   helpers.checkValidId(userId);
   helpers.checkValidString(movieName);
 
+  helpers.checkValidNumber(rating)
+
+  if (rating < 0 || rating > 5) throw "invalid rating"
+
+
   const collection = await userMovieData();
+
+  let date = new Date()
+  let year = date.getFullYear();
+
+  let month = date.getMonth() + 1;
+  if (month < 10) {
+    month = '0' + month;
+  }
+
+  let day = date.getDate();
+  if (day < 10) {
+    day = '0' + day;
+  }
+
+  let formattedDate = year + '-' + month + '-' + day;
 
   const newEntry = {
     userId: new ObjectId(userId),
     movieId: new ObjectId(movieId),
     movieName: movieName.trim(),
-    rating: null,
-    dateWatched: null,
+    rating: rating,
+    dateWatched: formattedDate,
     rewatchCount: 0,
     reviewDescription: "",
   };

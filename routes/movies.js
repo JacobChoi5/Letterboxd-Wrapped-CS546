@@ -66,7 +66,7 @@ router.route('/newmovie').get(requireLogin, async (req, res) => {
     try {
         let currentUserId = req.session.user._id
         helpers.checkValidId(currentUserId)
-        currentUserId = currentUserId.trim()
+        currentUserId = xss(currentUserId.trim())
         helpers.checkValidId(currentUserId)
         let curuser = await accountData.getAccountById(currentUserId)
         if (!curuser.isAdmin) throw "not authorized"
@@ -105,7 +105,7 @@ router.route('/moviecreated').post(requireLogin, async (req, res) => {
     try {
         let currentUserId = req.session.user._id
         helpers.checkValidId(currentUserId)
-        currentUserId = currentUserId.trim()
+        currentUserId = xss(currentUserId.trim())
         helpers.checkValidId(currentUserId)
         let curuser = await accountData.getAccountById(currentUserId)
         if (!curuser.isAdmin) throw "not authorized"
@@ -222,7 +222,7 @@ router.route('/moviecreated').post(requireLogin, async (req, res) => {
 
 
     try {
-        res.render('success', { Title: "Movie Created", successMessage: `${name} Created Successfully` })
+        res.status(201).render('success', { Title: "Movie Created", successMessage: `${name} Created Successfully` })
     } catch (e) {
         return res.status(500).render('error', {
             errorMessage: 'Failed to render movie created page: ' + e,
@@ -253,7 +253,7 @@ router.route('/:id').get(async (req, res) => {
     }
     movie.actors = movie.actors.slice(0, 5)
     try {
-        res.render('moviebyid', {
+        res.status(200).render('moviebyid', {
             movie: movie,
             Title: movie.name
         })
@@ -343,7 +343,7 @@ router.route('/:id/comment').post(async (req, res) => {
 router.route('/:id/likecomment').post(async (req, res) => {
     try {
         helpers.checkValidString(req.params.id)
-        req.params.id = req.params.id.trim()
+        req.params.id = xss(req.params.id.trim())
         helpers.checkValidString(req.params.id)
     } catch (e) {
         return res.status(400).render('error', {
@@ -353,7 +353,7 @@ router.route('/:id/likecomment').post(async (req, res) => {
     }
     try {
         helpers.checkValidString(req.body.commentId)
-        req.body.commentId = req.body.commentId.trim()
+        req.body.commentId = xss(req.body.commentId.trim())
         helpers.checkValidString(req.body.commentId)
     } catch (e) {
         return res.status(400).render('error', {
@@ -402,13 +402,25 @@ router.route('/:id/add').post(requireLogin, async (req, res) => {
     try {
         userId = req.session.user._id;
         helpers.checkValidId(userId);
-        userId = userId.trim();
+        userId = xss(userId.trim())
         helpers.checkValidId(userId);
     } catch (e) {
         return res.status(400).render('error', {
             errorMessage: 'Invalid user session: ' + e,
             class: 'invalid-user'
         });
+    }
+
+    let rating = NaN
+    try{
+        rating = Number(req.body.rating)
+        helpers.checkValidNumber(rating, "rating")
+        if(rating > 5 || rating < 0) throw "invalid rating"
+    } catch(e) {
+        return res.status(400).render('error', {
+            errorMessage: 'Invalid rating for movie: ' + e,
+            class: 'bad-rating'
+        })
     }
 
     // fetch movie
@@ -427,7 +439,8 @@ router.route('/:id/add').post(requireLogin, async (req, res) => {
         await userMovieData.addMovieForUser(
             movieId,
             userId,
-            movie.name
+            movie.name,
+            rating
         );
     } catch (e) {
         return res.status(500).render('error', {
@@ -438,7 +451,7 @@ router.route('/:id/add').post(requireLogin, async (req, res) => {
 
     // success
     try {
-        return res.render('success', {
+        return res.status(201).render('success', {
             Title: movie.name,
             successMessage: `${movie.name} successfully added to your account!`
         });
@@ -450,49 +463,11 @@ router.route('/:id/add').post(requireLogin, async (req, res) => {
     }
 });
 
-// router.route('/:id/add').post(async (req, res) => {
-//     try {
-//         helpers.checkValidString(req.params.id)
-//         req.params.id = xss(req.params.id.trim())
-//         helpers.checkValidString(req.params.id)
-//     } catch (e) {
-//         return res.status(400).render('error', {
-//             errorMessage: 'Error in id: ' + e,
-//             class: 'invalid-id'
-//         });
-//     }
-//     let movie = {}
-//     try {
-//         movie = await movieData.getMovieById(req.params.id)
-//     } catch (e) {
-//         return res.status(404).render('error', {
-//             errorMessage: 'Movie Not Found: ' + e,
-//             class: 'movie-not-found'
-//         });
-//     }
-//     try {
-//         accountData.addMovieById(req.params.id)
-//     } catch (e) {
-//         return res.status(500).render('error', {
-//             errorMessage: 'Could not add movie to account: ' + e,
-//             class: 'add-error'
-//         })
-//     }
-//     try {
-//         res.render('success', { Title: movie.name, successMessage: `${movie.name} successfully added to account!` })
-//     } catch (e) {
-//         return res.status(500).render('error', {
-//             errorMessage: 'Failed to render movie creation page: ' + e,
-//             class: 'page-fail'
-//         })
-//     }
-// })
-
 router.route('/:id/admin').get(requireLogin, async (req, res) => {
     try {
         let currentUserId = req.session.user._id
         helpers.checkValidId(currentUserId)
-        currentUserId = currentUserId.trim()
+        currentUserId = xss(currentUserId.trim())
         helpers.checkValidId(currentUserId)
         let curuser = await accountData.getAccountById(currentUserId)
         if (!curuser.isAdmin) throw "not authorized"
@@ -513,7 +488,7 @@ router.route('/:id/admin').get(requireLogin, async (req, res) => {
     }
     movie.actors = movie.actors.slice(0, 5)
     try {
-        res.render('moviebyidadmin', {
+        res.status(200).render('moviebyidadmin', {
             movie: movie,
             Title: movie.name
         })
@@ -540,7 +515,7 @@ router.route('/:id/editmovie').post(requireLogin, async (req, res) => {
     try {
         let currentUserId = req.session.user._id
         helpers.checkValidId(currentUserId)
-        currentUserId = currentUserId.trim()
+        currentUserId = xss(currentUserId.trim())
         helpers.checkValidId(currentUserId)
         let curuser = await accountData.getAccountById(currentUserId)
         if (!curuser.isAdmin) throw "not authorized"
@@ -614,7 +589,7 @@ router.route('/:id/editmovie').post(requireLogin, async (req, res) => {
     }
 
     try {
-        res.render('success', {
+        res.status(201).render('success', {
             Title: "Movie Updated",
             successMessage: `${name} Updated Successfully`
         })
@@ -632,7 +607,7 @@ router.route('/:id/editmovie').post(requireLogin, async (req, res) => {
     try {
         let currentUserId = req.session.user._id
         helpers.checkValidId(currentUserId)
-        currentUserId = currentUserId.trim()
+        currentUserId = xss(currentUserId.trim())
         helpers.checkValidId(currentUserId)
         let curuser = await accountData.getAccountById(currentUserId)
         if (!curuser.isAdmin) throw "not authorized"
@@ -662,7 +637,7 @@ router.route('/:id/editmovie').post(requireLogin, async (req, res) => {
     }
 
     try {
-        res.render('success', {
+        res.status(200).render('success', {
             Title: "Movie Deleted",
             successMessage: `${name} Deleted Successfully`
         })
